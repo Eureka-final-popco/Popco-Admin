@@ -1,9 +1,9 @@
 package com.popcoadmin.exception.business;
 
-import com.popcoadmin.exception.BaseException;
+import com.popcoadmin.exception.BusinessException;
 import com.popcoadmin.exception.ErrorCode;
 
-public class ReviewNotFoundException extends BaseException {
+public class ReviewNotFoundException extends BusinessException {
     public ReviewNotFoundException() {
         super(ErrorCode.REVIEW_NOT_FOUND);
     }

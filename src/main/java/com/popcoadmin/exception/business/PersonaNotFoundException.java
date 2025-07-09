@@ -1,9 +1,9 @@
 package com.popcoadmin.exception.business;
 
-import com.popcoadmin.exception.BaseException;
+import com.popcoadmin.exception.BusinessException;
 import com.popcoadmin.exception.ErrorCode;
 
-public class PersonaNotFoundException extends BaseException {
+public class PersonaNotFoundException extends BusinessException {
     public PersonaNotFoundException() {
         super(ErrorCode.PERSONA_NOT_FOUND);
     }

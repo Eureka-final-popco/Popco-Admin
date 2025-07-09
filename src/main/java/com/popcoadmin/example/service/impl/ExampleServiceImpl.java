@@ -4,7 +4,7 @@ import com.popcoadmin.example.dto.response.ExampleResponseDto;
 import com.popcoadmin.example.entity.Example;
 import com.popcoadmin.example.repository.ExampleRepository;
 import com.popcoadmin.example.service.ExampleService;
-import com.popcoadmin.exception.BaseException;
+import com.popcoadmin.exception.BusinessException;
 import com.popcoadmin.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,7 +31,7 @@ public class ExampleServiceImpl implements ExampleService {
     @Override
     public ExampleResponseDto getException() {
         Example example = exampleRepository.findById(404L)
-                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND)); // 테스트용 예외 메세지
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)); // 테스트용 예외 메세지
 
         return ExampleResponseDto.from(example, "실패 응답 예시");
     }

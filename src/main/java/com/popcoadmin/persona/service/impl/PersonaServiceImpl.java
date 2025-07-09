@@ -1,6 +1,6 @@
 package com.popcoadmin.persona.service.impl;
 
-import com.popcoadmin.exception.BaseException;
+import com.popcoadmin.exception.BusinessException;
 import com.popcoadmin.exception.ErrorCode;
 import com.popcoadmin.persona.dto.request.PersonaRequestDto;
 import com.popcoadmin.persona.dto.response.PersonaResponseDto;
@@ -28,7 +28,7 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public PersonaResponseDto getPersona(Long id) {
         Persona persona = personaRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id));
         return PersonaResponseDto.from(persona);
     }
 
@@ -43,7 +43,7 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public Void updatePersona(PersonaRequestDto requestDto, Long id) {
         if (!personaRepository.existsById(id)) {
-            throw new BaseException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id);
+            throw new BusinessException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id);
         }
 
         Persona persona = Persona.from(requestDto, id);
@@ -54,7 +54,7 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public Void deletePersona(Long id) {
         Persona persona = personaRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id));
 
         personaRepository.delete(persona);
         return null;
