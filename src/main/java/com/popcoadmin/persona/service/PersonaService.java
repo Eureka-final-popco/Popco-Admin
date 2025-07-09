@@ -6,7 +6,7 @@ import com.popcoadmin.persona.dto.response.PersonaResponseDto;
 import java.util.List;
 
 public interface PersonaService {
-    Void insertPersona(PersonaRequestDto requestDto);
+    Void createPersona(PersonaRequestDto requestDto);
     PersonaResponseDto getPersona(Long id);
     List<PersonaResponseDto> getPersonaList();
     Void updatePersona(PersonaRequestDto requestDto, Long id);

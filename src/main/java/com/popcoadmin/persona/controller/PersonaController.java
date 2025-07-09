@@ -21,8 +21,8 @@ public class PersonaController {
 
     @Operation(summary = "페르소나 신규 등록 API")
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> insertPersona(@RequestBody PersonaRequestDto requestDto) {
-        return ResponseEntity.ok(ApiResponse.success(personaService.insertPersona(requestDto)));
+    public ResponseEntity<ApiResponse<Void>> createPersona(@RequestBody PersonaRequestDto requestDto) {
+        return ResponseEntity.ok(ApiResponse.success(personaService.createPersona(requestDto)));
     }
 
     @Operation(summary = "페르소나 단일 조회 API")

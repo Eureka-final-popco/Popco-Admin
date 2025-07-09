@@ -19,7 +19,7 @@ public class PersonaServiceImpl implements PersonaService {
     private final PersonaRepository personaRepository;
 
     @Override
-    public Void insertPersona(PersonaRequestDto requestDto) {
+    public Void createPersona(PersonaRequestDto requestDto) {
         Persona persona = Persona.from(requestDto);
         personaRepository.save(persona);
         return null;
@@ -28,7 +28,7 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public PersonaResponseDto getPersona(Long id) {
         Persona persona = personaRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.ENTITY_NOT_FOUND, "페르소나 id: " + id));
+                .orElseThrow(() -> new BaseException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id));
         return PersonaResponseDto.from(persona);
     }
 
@@ -43,7 +43,7 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public Void updatePersona(PersonaRequestDto requestDto, Long id) {
         if (!personaRepository.existsById(id)) {
-            throw new BaseException(ErrorCode.ENTITY_NOT_FOUND, "페르소나 id: " + id);
+            throw new BaseException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id);
         }
 
         Persona persona = Persona.from(requestDto, id);
@@ -54,7 +54,7 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public Void deletePersona(Long id) {
         Persona persona = personaRepository.findById(id)
-                .orElseThrow(() -> new BaseException(ErrorCode.ENTITY_NOT_FOUND, "페르소나 id: " + id));
+                .orElseThrow(() -> new BaseException(ErrorCode.PERSONA_NOT_FOUND, "페르소나 id: " + id));
 
         personaRepository.delete(persona);
         return null;
