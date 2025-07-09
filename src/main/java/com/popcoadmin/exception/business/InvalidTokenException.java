@@ -1,9 +1,9 @@
 package com.popcoadmin.exception.business;
 
-import com.popcoadmin.exception.BaseException;
+import com.popcoadmin.exception.BusinessException;
 import com.popcoadmin.exception.ErrorCode;
 
-public class InvalidTokenException extends BaseException {
+public class InvalidTokenException extends BusinessException {
     public InvalidTokenException() {
         super(ErrorCode.INVALID_TOKEN);
     }
