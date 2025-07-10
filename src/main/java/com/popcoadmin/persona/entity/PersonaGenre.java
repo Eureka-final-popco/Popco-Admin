@@ -1,6 +1,6 @@
 package com.popcoadmin.persona.entity;
 
-import com.popcoadmin.contents.entity.Genre;
+import com.popcoadmin.content.entity.Genre;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

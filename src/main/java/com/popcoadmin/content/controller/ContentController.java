@@ -1,6 +1,6 @@
-package com.popcoadmin.contents.controller;
+package com.popcoadmin.content.controller;
 
-import com.popcoadmin.contents.service.ContentService;
+import com.popcoadmin.content.service.ContentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
