@@ -1,4 +1,4 @@
-package com.popcoadmin.contents.entity;
+package com.popcoadmin.content.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,26 +8,29 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "content_director")
+@Table(name = "content_actor")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContentDirector {
+public class ContentActor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "content_director_id")
-    private Long contentDirectorId;
+    @Column(name = "content_actor_id")
+    private Long contentActorId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_id", nullable = false)
     private Content content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "director_id", nullable = false)
-    private Director director;
+    @JoinColumn(name = "actor_id", nullable = false)
+    private Actor actor;
+
+    @Column(nullable = false)
+    private Integer order;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -1,4 +1,4 @@
-package com.popcoadmin.contents.entity;
+package com.popcoadmin.content.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,18 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "actor")
+@Table(name = "director")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Actor {
+public class Director {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "actor_id")
-    private Long actorId;
+    @Column(name = "director_id")
+    private Long directorId;
 
     @Column(nullable = false)
     private String name;
@@ -37,7 +37,7 @@ public class Actor {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "director", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ContentActor> contentActors = new ArrayList<>();
+    private List<ContentDirector> contentDirectors = new ArrayList<>();
 }

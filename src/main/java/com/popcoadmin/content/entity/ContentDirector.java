@@ -1,4 +1,4 @@
-package com.popcoadmin.contents.entity;
+package com.popcoadmin.content.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,28 +6,28 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "director")
+@Table(name = "content_director")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Director {
+public class ContentDirector {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "director_id")
-    private Long directorId;
+    @Column(name = "content_director_id")
+    private Long contentDirectorId;
 
-    @Column(nullable = false)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_id", nullable = false)
+    private Content content;
 
-    @Column(name = "profile_path")
-    private String profilePath;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "director_id", nullable = false)
+    private Director director;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -36,8 +36,4 @@ public class Director {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "director", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<ContentDirector> contentDirectors = new ArrayList<>();
 }

@@ -1,6 +1,6 @@
-package com.popcoadmin.contents.service.impl;
+package com.popcoadmin.content.service.impl;
 
-import com.popcoadmin.contents.service.ContentService;
+import com.popcoadmin.content.service.ContentService;
 import org.springframework.stereotype.Service;
 
 @Service

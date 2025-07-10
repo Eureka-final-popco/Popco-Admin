@@ -1,4 +1,4 @@
-package com.popcoadmin.contents.entity;
+package com.popcoadmin.content.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
