@@ -21,11 +21,11 @@ public class EventQuestionResponseDto {
     private LocalDateTime finishedAt;
     private List<EventOptionResponseDto> options;
 
-    public static EventQuestionResponseDto of(EventQuestion question) {
+    public static EventQuestionResponseDto from(EventQuestion question) {
         List<EventOptionResponseDto> optionDtos = null;
         if (question.getOptions() != null && !question.getOptions().isEmpty()) {
             optionDtos = question.getOptions().stream()
-                    .map(EventOptionResponseDto::of)
+                    .map(EventOptionResponseDto::from)
                     .collect(Collectors.toList());
         }
 

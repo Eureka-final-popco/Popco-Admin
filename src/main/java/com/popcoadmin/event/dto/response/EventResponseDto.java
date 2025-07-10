@@ -20,11 +20,11 @@ public class EventResponseDto {
     private LocalDateTime updatedAt;
     private List<EventQuestionResponseDto> questions;
 
-    public static EventResponseDto of(Event event) {
+    public static EventResponseDto from(Event event) {
         List<EventQuestionResponseDto> questionDtos = null;
         if (event.getQuestions() != null && !event.getQuestions().isEmpty()) {
             questionDtos = event.getQuestions().stream()
-                    .map(EventQuestionResponseDto::of)
+                    .map(EventQuestionResponseDto::from)
                     .collect(Collectors.toList());
         }
 

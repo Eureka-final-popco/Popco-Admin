@@ -42,7 +42,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
                 .build();
 
         EventQuestion savedQuestion = eventQuestionRepository.save(question);
-        return EventQuestionResponseDto.of(savedQuestion);
+        return EventQuestionResponseDto.from(savedQuestion);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
     public EventQuestionResponseDto getEventQuestion(Long questionId) {
         EventQuestion question = eventQuestionRepository.findById(questionId)
                 .orElseThrow(EventQuestionNotFoundException::new);
-        return EventQuestionResponseDto.of(question);
+        return EventQuestionResponseDto.from(question);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
             throw new EventNotFoundException("Event with ID " + eventId + " not found.");
         }
         return eventQuestionRepository.findByEvent_EventIdOrderBySortOrderAsc(eventId).stream()
-                .map(EventQuestionResponseDto::of)
+                .map(EventQuestionResponseDto::from)
                 .collect(Collectors.toList());
     }
 
@@ -79,7 +79,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
         question.setImgPath(requestDto.getImgPath());
         question.setFinishedAt(requestDto.getFinishedAt());
 
-        return EventQuestionResponseDto.of(question);
+        return EventQuestionResponseDto.from(question);
     }
 
     @Override

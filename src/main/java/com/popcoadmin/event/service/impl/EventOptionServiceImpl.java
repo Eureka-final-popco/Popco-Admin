@@ -36,7 +36,7 @@ public class EventOptionServiceImpl implements EventOptionService {
                 .build();
 
         EventOption savedOption = eventOptionRepository.save(option);
-        return EventOptionResponseDto.of(savedOption);
+        return EventOptionResponseDto.from(savedOption);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class EventOptionServiceImpl implements EventOptionService {
     public EventOptionResponseDto getEventOption(Long optionId) {
         EventOption option = eventOptionRepository.findById(optionId)
                 .orElseThrow(EventOptionNotFoundException::new);
-        return EventOptionResponseDto.of(option);
+        return EventOptionResponseDto.from(option);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class EventOptionServiceImpl implements EventOptionService {
         }
 
         return eventOptionRepository.findByQuestion_QuestionId(questionId).stream()
-                .map(EventOptionResponseDto::of)
+                .map(EventOptionResponseDto::from)
                 .collect(Collectors.toList());
     }
 
@@ -68,7 +68,7 @@ public class EventOptionServiceImpl implements EventOptionService {
         option.setText(requestDto.getText());
         option.setIsCorrect(requestDto.getIsCorrect());
 
-        return EventOptionResponseDto.of(option);
+        return EventOptionResponseDto.from(option);
     }
 
     @Override

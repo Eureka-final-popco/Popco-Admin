@@ -16,7 +16,7 @@ public class EventOptionResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static EventOptionResponseDto of(EventOption option) {
+    public static EventOptionResponseDto from(EventOption option) {
         return EventOptionResponseDto.builder()
                 .optionId(option.getOptionId())
                 .questionId(option.getQuestion().getQuestionId())

@@ -29,7 +29,7 @@ public class EventServiceImpl implements EventService {
                 .bannerPath(requestDto.getBannerPath())
                 .build();
         Event savedEvent = eventRepository.save(event);
-        return EventResponseDto.of(savedEvent);
+        return EventResponseDto.from(savedEvent);
     }
 
     @Override
@@ -37,14 +37,14 @@ public class EventServiceImpl implements EventService {
     public EventResponseDto getEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(EventNotFoundException::new);
-        return EventResponseDto.of(event);
+        return EventResponseDto.from(event);
     }
 
     @Override
     @Transactional
     public List<EventResponseDto> getAllEvents() {
         return eventRepository.findAll().stream()
-                .map(EventResponseDto::of)
+                .map(EventResponseDto::from)
                 .collect(Collectors.toList());
     }
 
@@ -57,7 +57,7 @@ public class EventServiceImpl implements EventService {
         event.setStartAt(requestDto.getStartAt());
         event.setEndAt(requestDto.getEndAt());
         event.setBannerPath(requestDto.getBannerPath());
-        return EventResponseDto.of(event);
+        return EventResponseDto.from(event);
     }
 
     @Override
