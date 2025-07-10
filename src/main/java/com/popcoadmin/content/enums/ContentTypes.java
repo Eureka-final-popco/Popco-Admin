@@ -1,4 +1,4 @@
-package com.popcoadmin.contents.enums;
+package com.popcoadmin.content.enums;
 
 import lombok.Getter;
 

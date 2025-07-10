@@ -1,6 +1,6 @@
-package com.popcoadmin.contents.repository;
+package com.popcoadmin.content.repository;
 
-import com.popcoadmin.contents.entity.Content;
+import com.popcoadmin.content.entity.Content;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

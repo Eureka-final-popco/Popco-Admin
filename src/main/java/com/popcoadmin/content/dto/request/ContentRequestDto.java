@@ -1,6 +1,6 @@
-package com.popcoadmin.contents.dto.request;
+package com.popcoadmin.content.dto.request;
 
-import com.popcoadmin.contents.enums.ContentTypes;
+import com.popcoadmin.content.enums.ContentTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

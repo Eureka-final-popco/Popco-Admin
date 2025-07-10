@@ -1,9 +1,7 @@
-package com.popcoadmin.contents.entity;
+package com.popcoadmin.content.entity;
 
-import com.popcoadmin.contents.dto.request.ContentRequestDto;
-import com.popcoadmin.contents.enums.ContentTypes;
-import com.popcoadmin.persona.dto.request.PersonaRequestDto;
-import com.popcoadmin.persona.entity.Persona;
+import com.popcoadmin.content.dto.request.ContentRequestDto;
+import com.popcoadmin.content.enums.ContentTypes;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
