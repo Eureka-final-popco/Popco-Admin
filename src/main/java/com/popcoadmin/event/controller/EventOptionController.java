@@ -1,5 +1,6 @@
 package com.popcoadmin.event.controller;
 
+import com.popcoadmin.common.response.ApiResponse;
 import com.popcoadmin.event.dto.request.EventOptionRequestDto;
 import com.popcoadmin.event.dto.response.EventOptionResponseDto;
 import com.popcoadmin.event.service.EventOptionService;
@@ -22,35 +23,50 @@ public class EventOptionController {
 
     @Operation(summary = "특정 질문에 옵션 생성", description = "지정된 질문에 새로운 옵션을 추가합니다.")
     @PostMapping
-    public ResponseEntity<EventOptionResponseDto> createEventOption(@PathVariable Long questionId, @RequestBody EventOptionRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<EventOptionResponseDto>> createEventOption(
+            @PathVariable Long eventId,
+            @PathVariable Long questionId,
+            @RequestBody EventOptionRequestDto requestDto) {
         EventOptionResponseDto createdOption = eventOptionService.createEventOption(questionId, requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOption);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("옵션이 성공적으로 생성되었습니다.", createdOption));
     }
 
     @Operation(summary = "특정 질문의 특정 옵션 조회", description = "지정된 질문 내에서 특정 옵션 ID의 정보를 조회합니다.")
     @GetMapping("/{optionId}")
-    public ResponseEntity<EventOptionResponseDto> getEventOption(@PathVariable Long optionId) {
+    public ResponseEntity<ApiResponse<EventOptionResponseDto>> getEventOption(
+            @PathVariable Long eventId,
+            @PathVariable Long questionId,
+            @PathVariable Long optionId) {
         EventOptionResponseDto option = eventOptionService.getEventOption(optionId);
-        return ResponseEntity.ok(option);
+        return ResponseEntity.ok(ApiResponse.success("옵션 조회 성공", option));
     }
 
     @Operation(summary = "특정 질문의 모든 옵션 조회", description = "지정된 질문에 속한 모든 옵션 목록을 조회합니다.")
     @GetMapping
-    public ResponseEntity<List<EventOptionResponseDto>> getEventOptionsByQuestion(@PathVariable Long questionId) {
+    public ResponseEntity<ApiResponse<List<EventOptionResponseDto>>> getEventOptionsByQuestion(
+            @PathVariable Long eventId,
+            @PathVariable Long questionId) {
         List<EventOptionResponseDto> options = eventOptionService.getEventOptionsByQuestion(questionId);
-        return ResponseEntity.ok(options);
+        return ResponseEntity.ok(ApiResponse.success("모든 옵션 조회 성공", options));
     }
 
     @Operation(summary = "옵션 정보 수정", description = "지정된 질문 내에서 특정 옵션 ID의 정보를 수정합니다.")
     @PutMapping("/{optionId}")
-    public ResponseEntity<EventOptionResponseDto> updateEventOption(@PathVariable Long optionId, @RequestBody EventOptionRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<EventOptionResponseDto>> updateEventOption(
+            @PathVariable Long eventId,
+            @PathVariable Long questionId,
+            @PathVariable Long optionId,
+            @RequestBody EventOptionRequestDto requestDto) {
         EventOptionResponseDto updatedOption = eventOptionService.updateEventOption(optionId, requestDto);
-        return ResponseEntity.ok(updatedOption);
+        return ResponseEntity.ok(ApiResponse.success("옵션 수정 성공", updatedOption));
     }
 
     @Operation(summary = "옵션 삭제", description = "지정된 질문 내에서 특정 옵션 ID의 정보를 삭제합니다.")
     @DeleteMapping("/{optionId}")
-    public ResponseEntity<Void> deleteEventOption(@PathVariable Long optionId) {
+    public ResponseEntity<ApiResponse<Void>> deleteEventOption(
+            @PathVariable Long eventId,
+            @PathVariable Long questionId,
+            @PathVariable Long optionId) {
         eventOptionService.deleteEventOption(optionId);
         return ResponseEntity.noContent().build();
     }
