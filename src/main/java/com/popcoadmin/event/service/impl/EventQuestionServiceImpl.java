@@ -29,7 +29,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
     @Transactional
     public EventQuestionResponseDto createEventQuestion(Long eventId, EventQuestionRequestDto requestDto) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(EventNotFoundException::new);
+                .orElseThrow(() -> new EventNotFoundException("이벤트를 찾을 수 없습니다. ID: " + eventId));
 
         validateSortOrderUniqueness(eventId, requestDto.getSortOrder(), null);
 
@@ -49,16 +49,16 @@ public class EventQuestionServiceImpl implements EventQuestionService {
     @Transactional
     public EventQuestionResponseDto getEventQuestion(Long questionId) {
         EventQuestion question = eventQuestionRepository.findById(questionId)
-                .orElseThrow(EventQuestionNotFoundException::new);
+                .orElseThrow(() -> new EventQuestionNotFoundException("이벤트 질문을 찾을 수 없습니다. ID: " + questionId)); // 직접 한글 메시지 작성 + ID
         return EventQuestionResponseDto.from(question);
     }
 
     @Override
     @Transactional
     public List<EventQuestionResponseDto> getEventQuestionsByEvent(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EventNotFoundException("Event with ID " + eventId + " not found.");
-        }
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("이벤트를 찾을 수 없습니다. ID: " + eventId)); // 직접 한글 메시지 작성 + ID
+
         return eventQuestionRepository.findByEvent_EventIdOrderBySortOrderAsc(eventId).stream()
                 .map(EventQuestionResponseDto::from)
                 .collect(Collectors.toList());
@@ -68,7 +68,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
     @Transactional
     public EventQuestionResponseDto updateEventQuestion(Long questionId, EventQuestionRequestDto requestDto) {
         EventQuestion question = eventQuestionRepository.findById(questionId)
-                .orElseThrow(EventQuestionNotFoundException::new);
+                .orElseThrow(() -> new EventQuestionNotFoundException("이벤트 질문을 찾을 수 없습니다. ID: " + questionId));
 
         if (!question.getSortOrder().equals(requestDto.getSortOrder())) {
             validateSortOrderUniqueness(question.getEvent().getEventId(), requestDto.getSortOrder(), questionId);
@@ -86,7 +86,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
     @Transactional
     public void deleteEventQuestion(Long questionId) {
         EventQuestion question = eventQuestionRepository.findById(questionId)
-                .orElseThrow(EventQuestionNotFoundException::new);
+                .orElseThrow(() -> new EventQuestionNotFoundException("이벤트 질문을 찾을 수 없습니다. ID: " + questionId));
         eventQuestionRepository.delete(question);
     }
 
@@ -95,7 +95,7 @@ public class EventQuestionServiceImpl implements EventQuestionService {
 
         if (existingQuestion.isPresent()) {
             if (currentQuestionId == null || !existingQuestion.get().getQuestionId().equals(currentQuestionId)) {
-                throw new DuplicateSortOrderException("EventId: " + eventId + ", SortOrder: " + sortOrder);
+                throw new DuplicateSortOrderException("해당 이벤트에 이미 동일한 순서(sortOrder)의 질문이 존재합니다.");
             }
         }
     }

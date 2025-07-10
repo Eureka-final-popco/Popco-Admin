@@ -5,6 +5,7 @@ import com.popcoadmin.event.dto.response.EventResponseDto;
 import com.popcoadmin.event.entity.Event;
 import com.popcoadmin.event.repository.EventRepository;
 import com.popcoadmin.event.service.EventService;
+import com.popcoadmin.exception.ErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventResponseDto getEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(EventNotFoundException::new);
+                .orElseThrow(() -> new EventNotFoundException("이벤트를 찾을 수 없습니다. ID: " + eventId));
         return EventResponseDto.from(event);
     }
 
@@ -49,9 +50,10 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventResponseDto updateEvent(Long eventId, EventRequestDto requestDto) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(EventNotFoundException::new);
+                .orElseThrow(() -> new EventNotFoundException("이벤트를 찾을 수 없습니다. ID: " + eventId));
 
         event.setName(requestDto.getName());
         event.setStartAt(requestDto.getStartAt());
@@ -64,7 +66,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public void deleteEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(EventNotFoundException::new);
+                .orElseThrow(() -> new EventNotFoundException("이벤트를 찾을 수 없습니다. ID: " + eventId));
         eventRepository.delete(event);
     }
 }
