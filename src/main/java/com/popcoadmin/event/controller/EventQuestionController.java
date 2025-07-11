@@ -28,7 +28,7 @@ public class EventQuestionController {
             @PathVariable Long eventId,
             @RequestBody EventQuestionRequestDto requestDto) {
         EventQuestionResponseDto createdQuestion = eventQuestionService.createEventQuestion(eventId, requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("질문이 성공적으로 생성되었습니다.", createdQuestion));
+        return ResponseEntity.ok(ApiResponse.success("질문 생성 성공", createdQuestion));
     }
 
     @Operation(summary = "특정 이벤트의 특정 질문 조회", description = "지정된 이벤트 내에서 특정 질문 ID의 정보를 조회합니다.")
@@ -63,6 +63,6 @@ public class EventQuestionController {
             @PathVariable Long eventId,
             @PathVariable Long questionId) {
         eventQuestionService.deleteEventQuestion(questionId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("질문 삭제 성공", null));
     }
 }

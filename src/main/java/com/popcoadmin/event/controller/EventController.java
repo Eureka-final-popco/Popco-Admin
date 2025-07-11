@@ -7,7 +7,6 @@ import com.popcoadmin.event.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +24,7 @@ public class EventController {
     @PostMapping
     public ResponseEntity<ApiResponse<EventResponseDto>> createEvent(@RequestBody EventRequestDto requestDto) {
         EventResponseDto createdEvent = eventService.createEvent(requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("이벤트가 성공적으로 생성되었습니다.", createdEvent));
+        return ResponseEntity.ok(ApiResponse.success("이벤트 생성 성공", createdEvent));
     }
 
     @Operation(summary = "특정 이벤트 조회", description = "ID를 통해 특정 이벤트 정보를 조회합니다.")
@@ -55,6 +54,6 @@ public class EventController {
     @DeleteMapping("/{eventId}")
     public ResponseEntity<ApiResponse<Void>> deleteEvent(@PathVariable Long eventId) {
         eventService.deleteEvent(eventId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("이벤트 삭제 성공", null));
     }
 }

@@ -28,7 +28,7 @@ public class EventOptionController {
             @PathVariable Long questionId,
             @RequestBody EventOptionRequestDto requestDto) {
         EventOptionResponseDto createdOption = eventOptionService.createEventOption(questionId, requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("옵션이 성공적으로 생성되었습니다.", createdOption));
+        return ResponseEntity.ok(ApiResponse.success("옵션 생성 성공.", createdOption));
     }
 
     @Operation(summary = "특정 질문의 특정 옵션 조회", description = "지정된 질문 내에서 특정 옵션 ID의 정보를 조회합니다.")
@@ -68,6 +68,6 @@ public class EventOptionController {
             @PathVariable Long questionId,
             @PathVariable Long optionId) {
         eventOptionService.deleteEventOption(optionId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("옵션 삭제 성공", null));
     }
 }
