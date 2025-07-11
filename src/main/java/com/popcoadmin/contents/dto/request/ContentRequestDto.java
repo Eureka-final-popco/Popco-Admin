@@ -4,6 +4,7 @@ import com.popcoadmin.contents.enums.ContentTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 public class ContentRequestDto {
     private String title;
     private String overview;
-    private Float rating_average;
+    private BigDecimal ratingAverage;
     private LocalDateTime releaseDate;
     private Integer ratingCount;
     private String backdropPath;
