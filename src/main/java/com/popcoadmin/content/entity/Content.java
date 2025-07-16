@@ -1,52 +1,78 @@
 package com.popcoadmin.content.entity;
 
-import com.popcoadmin.content.dto.request.ContentRequestDto;
-import com.popcoadmin.content.enums.ContentTypes;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.popcoadmin.content.entity.key.ContentId;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
-@Builder
-@Getter
+@Table(name = "content")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"casts", "crews", "videos", "watchProviders"})
 public class Content {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long contentId;
+    @EmbeddedId
+    private ContentId id;
 
+    @Column(nullable = false)
     private String title;
+
+    @Column(columnDefinition = "TEXT")
     private String overview;
-    private Float rating_average;
-    private LocalDateTime releaseDate;
-    private Integer ratingCount;
-    private String backdropPath;
-    private ContentTypes type;
-    private String posterPath;
-    private String trailerPath;
+
+    @Column(name = "release_date")
+    private LocalDate releaseDate;
+
+    @Column(name = "runtime")
     private Integer runtime;
 
-    public static Content from(ContentRequestDto request) {
-        return Content.builder()
-                .title(request.getTitle())
-                .overview(request.getOverview())
-                .rating_average(request.getRating_average())
-                .releaseDate(request.getReleaseDate())
-                .ratingCount(request.getRatingCount())
-                .backdropPath(request.getBackdropPath())
-                .type(request.getType())
-                .posterPath(request.getPosterPath())
-                .trailerPath(request.getTrailerPath())
-                .runtime(request.getRuntime())
-                .build();
-    }
+    @Column(name = "rating_count")
+    private Long ratingCount;
+
+    @Column(name = "rating_average")
+    private BigDecimal ratingAverage;
+
+    @Column(name = "poster_path")
+    private String posterPath;
+
+    @Column(name = "backdrop_path")
+    private String backdropPath;
+
+    @Column(name = "trailer_path")
+    private String trailerPath;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "content_genre_ids",
+            joinColumns = {
+                    @JoinColumn(name = "content_id",   referencedColumnName = "id"),
+                    @JoinColumn(name = "content_type", referencedColumnName = "type")
+            }
+    )
+    @Column(name = "genre_id")
+    private Set<Integer> genreIds = new HashSet<>();
+
+    // 관계 매핑
+    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Cast> casts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Crew> crews = new ArrayList<>();
+
+//    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<ContentImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ContentVideo> videos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<WatchProvider> watchProviders = new ArrayList<>();
 }

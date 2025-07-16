@@ -1,22 +1,17 @@
 package com.popcoadmin.content.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Builder
-@Getter
+@Table(name = "genre")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Genre {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long genreId;
+    private Integer id;
+
+    @Column(nullable = false)
     private String name;
 }
