@@ -1,5 +1,6 @@
 package com.popcoadmin.content.entity;
 
+import com.popcoadmin.content.dto.response.genre.GenreResponse;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,4 +15,11 @@ public class Genre {
 
     @Column(nullable = false)
     private String name;
+
+    public static Genre from(GenreResponse dto) {
+        Genre genre = new Genre();
+        genre.setId(dto.getId());
+        genre.setName(dto.getName());
+        return genre;
+    }
 }

@@ -25,7 +25,6 @@ public class Actor {
     @Column(name = "gender")
     private Integer gender; // 0: Not specified, 1: Female, 2: Male, 3: Non-binary
 
-    // 양방향 관계
     @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Cast> castRoles = new ArrayList<>();
 }

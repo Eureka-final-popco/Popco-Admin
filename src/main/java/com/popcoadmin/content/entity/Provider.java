@@ -1,5 +1,6 @@
 package com.popcoadmin.content.entity;
 
+import com.popcoadmin.content.dto.response.provider.ProviderResponse;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,10 +26,14 @@ public class Provider {
     @Column(name = "logo_path", length = 500)
     private String logoPath;
 
-//    @Column(name = "origin_country", length = 10)
-//    private String originCountry;
-
-    // 양방향 관계
     @OneToMany(mappedBy = "provider", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WatchProvider> watchProviders = new ArrayList<>();
+
+    public static Provider from(ProviderResponse dto) {
+        Provider provider = new Provider();
+        provider.setId(dto.getProviderId());
+        provider.setName(dto.getProviderName());
+        provider.setLogoPath(dto.getLogoPath());
+        return provider;
+    }
 }

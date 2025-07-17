@@ -5,32 +5,26 @@ import com.popcoadmin.apiclient.TmdbTvApiClient;
 import com.popcoadmin.content.dto.response.content.ContentDetailResponse;
 import com.popcoadmin.content.dto.response.content.ContentFullDetailResponse;
 import com.popcoadmin.content.dto.response.content.ContentPageResponse;
-import com.popcoadmin.content.dto.response.content.ContentResponse;
 import com.popcoadmin.content.dto.response.credit.CreditsResponse;
-import com.popcoadmin.content.dto.response.genre.GenreResponse;
-import com.popcoadmin.content.dto.response.provider.ProviderResponse;
+import com.popcoadmin.content.dto.response.videos.VideoResponse;
 import com.popcoadmin.content.dto.response.videos.VideosResponse;
 import com.popcoadmin.content.dto.response.watchprovider.WatchProviderCountry;
 import com.popcoadmin.content.dto.response.watchprovider.WatchProviderInfo;
 import com.popcoadmin.content.dto.response.watchprovider.WatchProvidersResponse;
 import com.popcoadmin.content.entity.*;
 import com.popcoadmin.content.entity.key.ContentId;
-import com.popcoadmin.content.entity.type.ProviderType;
 import com.popcoadmin.content.repository.*;
 import com.popcoadmin.content.service.ContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -103,7 +97,7 @@ public class ContentServiceImpl implements ContentService {
         tmdbMovieApiClient.getGenres()
                 .doOnNext(response -> log.info("Fetched {} Movie genres", response.getGenres().size()))
                 .flatMapMany(response -> Flux.fromIterable(response.getGenres()))
-                .map(this::convertToGenreEntity)
+                .map(Genre::from)
                 .collectList()
                 .doOnNext(genres -> {
                     genreRepository.saveAll(genres);
@@ -114,7 +108,7 @@ public class ContentServiceImpl implements ContentService {
         tmdbTvApiClient.getGenres()
                 .doOnNext(response -> log.info("Fetched {} TV genres", response.getGenres().size()))
                 .flatMapMany(response -> Flux.fromIterable(response.getGenres()))
-                .map(this::convertToGenreEntity)
+                .map(Genre::from)
                 .collectList()
                 .doOnNext(genres -> {
                     genreRepository.saveAll(genres);
@@ -131,7 +125,7 @@ public class ContentServiceImpl implements ContentService {
         tmdbMovieApiClient.getAllMovieProviders()
                 .doOnNext(response -> log.info("Fetched {} movie providers", response.getResults().size()))
                 .flatMapMany(response -> Flux.fromIterable(response.getResults()))
-                .map(this::convertToProviderEntity)
+                .map(Provider::from)
                 .collectList()
                 .doOnNext(providers -> {
                     providers.forEach(provider -> {
@@ -148,7 +142,7 @@ public class ContentServiceImpl implements ContentService {
         tmdbTvApiClient.getAllTvProviders()
                 .doOnNext(response -> log.info("Fetched {} TV providers", response.getResults().size()))
                 .flatMapMany(response -> Flux.fromIterable(response.getResults()))
-                .map(this::convertToProviderEntity)
+                .map(Provider::from)
                 .collectList()
                 .doOnNext(providers -> {
                     providers.forEach(provider -> {
@@ -313,7 +307,7 @@ public class ContentServiceImpl implements ContentService {
                             response.getResults().size(), response.getPage());
                 })
                 .flatMapIterable(ContentPageResponse::getResults)
-                .map(this::convertToMovieEntity)
+                .map(Content::movieFrom)
                 .buffer(100) // Batch processing
                 .doOnNext(movies -> {
                     contentRepository.saveAll(movies);
@@ -341,7 +335,7 @@ public class ContentServiceImpl implements ContentService {
                             response.getResults().size(), response.getPage());
                 })
                 .flatMapIterable(ContentPageResponse::getResults)
-                .map(this::convertToTvEntity)
+                .map(Content::tvFrom)
                 .buffer(100) // Batch processing
                 .doOnNext(tvs -> {
                     contentRepository.saveAll(tvs);
@@ -405,8 +399,7 @@ public class ContentServiceImpl implements ContentService {
 
         // Crew 저장 (감독, 제작자 등 주요 인물만)
         List<Crew> crews = credits.getCrew().stream()
-                .filter(crew -> Arrays.asList("Director", "Producer", "Writer", "Screenplay",
-                                "Executive Producer", "Director of Photography", "Editor", "Original Music Composer")
+                .filter(crew -> Arrays.asList("Director", "Producer", "Writer")
                         .contains(crew.getJob()))
                 .map(crewDto -> {
                     // CrewMember 조회 또는 생성
@@ -425,7 +418,6 @@ public class ContentServiceImpl implements ContentService {
                     crew.setCrewMember(crewMember);
                     crew.setContent(content);
                     crew.setJob(crewDto.getJob());
-                    crew.setDepartment(crewDto.getDepartment());
                     return crew;
                 })
                 .collect(Collectors.toList());
@@ -442,6 +434,7 @@ public class ContentServiceImpl implements ContentService {
 
         List<ContentVideo> contentVideos = videos.getResults().stream()
                 .filter(v -> "YouTube".equals(v.getSite()))
+                .filter(VideoResponse::getOfficial)
                 .limit(10) // 상위 10개만
                 .map(video -> {
                     ContentVideo contentVideo = new ContentVideo();
@@ -449,11 +442,8 @@ public class ContentServiceImpl implements ContentService {
                     contentVideo.setContent(content);
                     contentVideo.setName(video.getName());
                     contentVideo.setKey(video.getKey());
-                    contentVideo.setSite(video.getSite());
-                    contentVideo.setSize(video.getSize());
                     contentVideo.setType(video.getType());
                     contentVideo.setOfficial(video.getOfficial());
-                    contentVideo.setPublishedAt(video.getPublishedAt());
                     return contentVideo;
                 })
                 .collect(Collectors.toList());
@@ -461,7 +451,8 @@ public class ContentServiceImpl implements ContentService {
         videoRepository.saveAll(contentVideos);
     }
 
-    private void saveWatchProviders(WatchProvidersResponse providers, String type) {
+    @Transactional(propagation = Propagation.REQUIRED)
+    protected void saveWatchProviders(WatchProvidersResponse providers, String type) {
         ContentId contentId = new ContentId(providers.getId(), type);
 
         Content content = contentRepository.findById(contentId).orElse(null);
@@ -469,47 +460,48 @@ public class ContentServiceImpl implements ContentService {
 
         watchProviderRepository.deleteByContent_Id(contentId);
 
+        // HashSet 대신 ArrayList 사용하여 hashCode 호출 방지
         List<WatchProvider> watchProviders = new ArrayList<>();
+        Set<Integer> processedProviderIds = new HashSet<>(); // 중복 체크용
 
         // 한국 제공자
         if (providers.getResults() != null && providers.getResults().getKr() != null) {
             WatchProviderCountry kr = providers.getResults().getKr();
 
+            // 모든 타입의 provider를 하나로 통합
+            List<WatchProviderInfo> allProviderInfos = new ArrayList<>();
+
             // 스트리밍
             if (kr.getFlatrate() != null) {
-                kr.getFlatrate().forEach(p -> {
-                    WatchProvider watchProvider = createWatchProvider(content, p, ProviderType.STREAM, "KR");
-                    if (watchProvider != null) {
-                        watchProviders.add(watchProvider);
-                    }
-                });
+                allProviderInfos.addAll(kr.getFlatrate());
             }
 
             // 대여
             if (kr.getRent() != null) {
-                kr.getRent().forEach(p -> {
-                    WatchProvider watchProvider = createWatchProvider(content, p, ProviderType.RENT, "KR");
-                    if (watchProvider != null) {
-                        watchProviders.add(watchProvider);
-                    }
-                });
+                allProviderInfos.addAll(kr.getRent());
             }
 
             // 구매
             if (kr.getBuy() != null) {
-                kr.getBuy().forEach(p -> {
-                    WatchProvider watchProvider = createWatchProvider(content, p, ProviderType.BUY, "KR");
+                allProviderInfos.addAll(kr.getBuy());
+            }
+
+            // 중복 제거하며 WatchProvider 생성
+            for (WatchProviderInfo info : allProviderInfos) {
+                if (!processedProviderIds.contains(info.getProviderId())) {
+                    processedProviderIds.add(info.getProviderId());
+                    WatchProvider watchProvider = createSimpleWatchProvider(content, info, "KR");
                     if (watchProvider != null) {
                         watchProviders.add(watchProvider);
                     }
-                });
+                }
             }
         }
 
         watchProviderRepository.saveAll(watchProviders);
     }
 
-    private WatchProvider createWatchProvider(Content content, WatchProviderInfo info, ProviderType type, String country) {
+    private WatchProvider createSimpleWatchProvider(Content content, WatchProviderInfo info, String country) {
         // Provider 조회 또는 생성
         Provider provider = providerRepository.findById(info.getProviderId())
                 .orElseGet(() -> {
@@ -523,63 +515,8 @@ public class ContentServiceImpl implements ContentService {
         WatchProvider watchProvider = new WatchProvider();
         watchProvider.setProvider(provider);
         watchProvider.setContent(content);
-        watchProvider.setType(type);
-        watchProvider.setDisplayPriority(info.getDisplayPriority());
-        watchProvider.setCountry(country);
 
         return watchProvider;
     }
 
-    private Genre convertToGenreEntity(GenreResponse dto) {
-        Genre genre = new Genre();
-        genre.setId(dto.getId());
-        genre.setName(dto.getName());
-        return genre;
-    }
-
-    private Provider convertToProviderEntity(ProviderResponse dto) {
-        Provider provider = new Provider();
-        provider.setId(dto.getProviderId());
-        provider.setName(dto.getProviderName());
-        provider.setLogoPath(dto.getLogoPath());
-        return provider;
-    }
-
-    private Content convertToMovieEntity(ContentResponse dto) {
-        Content content = new Content();
-        ContentId contentId = new ContentId(dto.getId(), "movie");
-        content.setId(contentId);
-        content.setTitle(dto.getTitle());
-        content.setOverview(dto.getOverview());
-        content.setReleaseDate(dto.getReleaseDate());
-        content.setRatingCount(0L);
-        content.setRatingAverage(BigDecimal.valueOf(0));
-        content.setPosterPath(dto.getPosterPath());
-        content.setBackdropPath(dto.getBackdropPath());
-
-        if (dto.getGenreIds() != null) {
-            content.setGenreIds(new HashSet<>(dto.getGenreIds()));
-        }
-
-        return content;
-    }
-
-    private Content convertToTvEntity(ContentResponse dto) {
-        Content content = new Content();
-        ContentId contentId = new ContentId(dto.getId(), "tv");
-        content.setId(contentId);
-        content.setTitle(dto.getName());
-        content.setOverview(dto.getOverview());
-        content.setReleaseDate(dto.getReleaseDate());
-        content.setRatingCount(0L);
-        content.setRatingAverage(BigDecimal.valueOf(0));
-        content.setPosterPath(dto.getPosterPath());
-        content.setBackdropPath(dto.getBackdropPath());
-
-        if (dto.getGenreIds() != null) {
-            content.setGenreIds(new HashSet<>(dto.getGenreIds()));
-        }
-
-        return content;
-    }
 }

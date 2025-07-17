@@ -26,14 +26,8 @@ public class ContentVideo {
     @Column(name = "video_key")
     private String key;
 
-    private String site;
-
-    private Integer size;
-
     private String type; // Trailer, Teaser, Clip, etc.
 
     private Boolean official;
 
-    @Column(name = "published_at")
-    private String publishedAt;
 }

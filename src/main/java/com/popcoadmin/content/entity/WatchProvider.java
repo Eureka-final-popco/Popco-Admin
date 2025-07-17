@@ -1,10 +1,11 @@
 package com.popcoadmin.content.entity;
 
-import com.popcoadmin.content.entity.type.ProviderType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Objects;
 
 @Entity
 @Table(name = "watch_provider")
@@ -27,13 +28,23 @@ public class WatchProvider {
     })
     private Content content;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private ProviderType type; // STREAM, RENT, BUY
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WatchProvider that = (WatchProvider) o;
+        // provider.getId()와 content.getId()만 사용
+        return Objects.equals(provider != null ? provider.getId() : null,
+                that.provider != null ? that.provider.getId() : null) &&
+                Objects.equals(content != null ? content.getId() : null,
+                        that.content != null ? that.content.getId() : null);
+    }
 
-    @Column(name = "display_priority")
-    private Integer displayPriority;
-
-    @Column(length = 10)
-    private String country;
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                provider != null ? provider.getId() : null,
+                content != null ? content.getId() : null
+        );
+    }
 }

@@ -28,6 +28,4 @@ public class Crew {
 
     private String job;
 
-    private String department;
-
 }

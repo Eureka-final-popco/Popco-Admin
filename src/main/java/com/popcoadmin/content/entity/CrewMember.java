@@ -31,7 +31,6 @@ public class CrewMember {
     @Column(name = "gender")
     private Integer gender;
 
-    // 양방향 관계
     @OneToMany(mappedBy = "crewMember", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Crew> crewRoles = new ArrayList<>();
 }

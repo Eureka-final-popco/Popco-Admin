@@ -1,15 +1,13 @@
 package com.popcoadmin.content.entity;
 
+import com.popcoadmin.content.dto.response.content.ContentResponse;
 import com.popcoadmin.content.entity.key.ContentId;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "content")
@@ -46,12 +44,9 @@ public class Content {
     @Column(name = "backdrop_path")
     private String backdropPath;
 
-    @Column(name = "trailer_path")
-    private String trailerPath;
-
     @ElementCollection
     @CollectionTable(
-            name = "content_genre_ids",
+            name = "content_genre",
             joinColumns = {
                     @JoinColumn(name = "content_id",   referencedColumnName = "id"),
                     @JoinColumn(name = "content_type", referencedColumnName = "type")
@@ -67,12 +62,60 @@ public class Content {
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Crew> crews = new ArrayList<>();
 
-//    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-//    private List<ContentImage> images = new ArrayList<>();
-
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ContentVideo> videos = new ArrayList<>();
 
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WatchProvider> watchProviders = new ArrayList<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Content content = (Content) o;
+        return Objects.equals(id, content.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    public static Content tvFrom(ContentResponse dto) {
+        Content content = new Content();
+        ContentId contentId = new ContentId(dto.getId(), "tv");
+        content.setId(contentId);
+        content.setTitle(dto.getName());
+        content.setOverview(dto.getOverview());
+        content.setReleaseDate(dto.getReleaseDate());
+        content.setRatingCount(0L);
+        content.setRatingAverage(BigDecimal.valueOf(0));
+        content.setPosterPath(dto.getPosterPath());
+        content.setBackdropPath(dto.getBackdropPath());
+
+        if (dto.getGenreIds() != null) {
+            content.setGenreIds(new HashSet<>(dto.getGenreIds()));
+        }
+
+        return content;
+    }
+
+    public static Content movieFrom(ContentResponse dto) {
+        Content content = new Content();
+        ContentId contentId = new ContentId(dto.getId(), "movie");
+        content.setId(contentId);
+        content.setTitle(dto.getTitle());
+        content.setOverview(dto.getOverview());
+        content.setReleaseDate(dto.getReleaseDate());
+        content.setRatingCount(0L);
+        content.setRatingAverage(BigDecimal.valueOf(0));
+        content.setPosterPath(dto.getPosterPath());
+        content.setBackdropPath(dto.getBackdropPath());
+
+        if (dto.getGenreIds() != null) {
+            content.setGenreIds(new HashSet<>(dto.getGenreIds()));
+        }
+
+        return content;
+    }
 }

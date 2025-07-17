@@ -18,17 +18,6 @@ import java.util.Map;
 public class ContentController {
     private final ContentService contentService;
 
-//    @PostMapping("/all")
-//    public ResponseEntity<ApiResponse<Void>> syncAll(@RequestParam(defaultValue = "50") int pagesPerCategory,
-//                                                                   @RequestParam(defaultValue = "true") boolean includeDetails) {
-//        // 비동기로 실행
-//        new Thread(() -> {
-//            contentService.syncAllContentData(pagesPerCategory, includeDetails);
-//        }).start();
-//
-//        return ResponseEntity.ok(ApiResponse.success("영화, TV 시리즈 가져오기 성공", null));
-//    }
-
     @Operation(summary = "영화 데이터 가져오기", description = "영화 데이터를 가져옵니다.")
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<Void>> syncAll(int pagesPerCategory, boolean includeDetails) {
