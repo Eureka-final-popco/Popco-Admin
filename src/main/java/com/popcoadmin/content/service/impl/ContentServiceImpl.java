@@ -1,8 +1,522 @@
 package com.popcoadmin.content.service.impl;
 
+import com.popcoadmin.apiclient.TmdbMovieApiClient;
+import com.popcoadmin.apiclient.TmdbTvApiClient;
+import com.popcoadmin.content.dto.response.content.ContentDetailResponse;
+import com.popcoadmin.content.dto.response.content.ContentFullDetailResponse;
+import com.popcoadmin.content.dto.response.content.ContentPageResponse;
+import com.popcoadmin.content.dto.response.credit.CreditsResponse;
+import com.popcoadmin.content.dto.response.videos.VideoResponse;
+import com.popcoadmin.content.dto.response.videos.VideosResponse;
+import com.popcoadmin.content.dto.response.watchprovider.WatchProviderCountry;
+import com.popcoadmin.content.dto.response.watchprovider.WatchProviderInfo;
+import com.popcoadmin.content.dto.response.watchprovider.WatchProvidersResponse;
+import com.popcoadmin.content.entity.*;
+import com.popcoadmin.content.entity.key.ContentId;
+import com.popcoadmin.content.repository.*;
 import com.popcoadmin.content.service.ContentService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class ContentServiceImpl implements ContentService {
+
+    private final TmdbTvApiClient tmdbTvApiClient;
+    private final TmdbMovieApiClient tmdbMovieApiClient;
+
+    private final ContentRepository contentRepository;
+    private final GenreRepository genreRepository;
+    private final ProviderRepository providerRepository;
+    private final CastRepository castRepository;
+    private final CrewRepository crewRepository;
+    private final ActorRepository actorRepository;
+    private final CrewMemberRepository crewMemberRepository;
+    private final ContentVideoRepository videoRepository;
+    private final WatchProviderRepository watchProviderRepository;
+
+    @Override
+    @Transactional
+    public void syncAllContentData(int pagesPerCategory, boolean includeDetails) {
+        // 1. 장르 동기화
+        syncGenres();
+
+        // 2. Provider 동기화
+        syncAllProviders();
+
+        // 3. 기본 데이터 동기화
+        syncNowPlayingMovies(pagesPerCategory);
+        syncUpcomingMovies(pagesPerCategory);
+        syncOnTheAirTvs(pagesPerCategory);
+        syncPopular(pagesPerCategory);
+        syncTopRated(pagesPerCategory);
+
+        if (includeDetails) {
+            // 4. 통합 상세 정보 동기화 (한 번의 API 호출로 모든 정보 가져오기)
+            List<Long> allMovieIds = contentRepository.findAllMovieIds();
+            List<Long> allTvIds = contentRepository.findAllTvIds();
+
+            log.info("Found {} movies and {} tvs. Starting full details sync...",
+                    allMovieIds.size(), allTvIds.size());
+
+            // 배치로 처리
+            int batchSize = 100;
+
+            // 영화 상세 정보 (한 번의 호출로 모든 정보)
+            for (int i = 0; i < allMovieIds.size(); i += batchSize) {
+                List<Long> batch = allMovieIds.subList(i, Math.min(i + batchSize, allMovieIds.size()));
+                log.info("Processing movie batch {}/{}", (i/batchSize) + 1, (allMovieIds.size()/batchSize) + 1);
+                syncMovieFullDetails(batch);
+            }
+
+            // TV 상세 정보 (한 번의 호출로 모든 정보)
+            for (int i = 0; i < allTvIds.size(); i += batchSize) {
+                List<Long> batch = allTvIds.subList(i, Math.min(i + batchSize, allTvIds.size()));
+                log.info("Processing tv batch {}/{}", (i/batchSize) + 1, (allTvIds.size()/batchSize) + 1);
+                syncTvFullDetails(batch);
+            }
+        }
+
+        log.info("All content data synchronization completed!");
+    }
+
+    @Transactional
+    public void syncGenres() {
+        log.info("Starting genre synchronization...");
+
+        tmdbMovieApiClient.getGenres()
+                .doOnNext(response -> log.info("Fetched {} Movie genres", response.getGenres().size()))
+                .flatMapMany(response -> Flux.fromIterable(response.getGenres()))
+                .map(Genre::from)
+                .collectList()
+                .doOnNext(genres -> {
+                    genreRepository.saveAll(genres);
+                    log.info("Saved {} Movie genres to database", genres.size());
+                })
+                .block();
+
+        tmdbTvApiClient.getGenres()
+                .doOnNext(response -> log.info("Fetched {} TV genres", response.getGenres().size()))
+                .flatMapMany(response -> Flux.fromIterable(response.getGenres()))
+                .map(Genre::from)
+                .collectList()
+                .doOnNext(genres -> {
+                    genreRepository.saveAll(genres);
+                    log.info("Saved {} TV genres to database", genres.size());
+                })
+                .block();
+    }
+
+    @Transactional
+    public void syncAllProviders() {
+        log.info("Starting synchronization of all available providers...");
+
+        // 영화 Provider 동기화
+        tmdbMovieApiClient.getAllMovieProviders()
+                .doOnNext(response -> log.info("Fetched {} movie providers", response.getResults().size()))
+                .flatMapMany(response -> Flux.fromIterable(response.getResults()))
+                .map(Provider::from)
+                .collectList()
+                .doOnNext(providers -> {
+                    providers.forEach(provider -> {
+                        // 이미 존재하는지 확인 후 저장
+                        if (!providerRepository.existsById(provider.getId())) {
+                            providerRepository.save(provider);
+                        }
+                    });
+                    log.info("Processed {} movie providers", providers.size());
+                })
+                .block();
+
+        // TV Provider 동기화 (영화와 다른 provider가 있을 수 있음)
+        tmdbTvApiClient.getAllTvProviders()
+                .doOnNext(response -> log.info("Fetched {} TV providers", response.getResults().size()))
+                .flatMapMany(response -> Flux.fromIterable(response.getResults()))
+                .map(Provider::from)
+                .collectList()
+                .doOnNext(providers -> {
+                    providers.forEach(provider -> {
+                        // 이미 존재하는지 확인 후 저장 또는 업데이트
+                        providerRepository.findById(provider.getId())
+                                .ifPresentOrElse(
+                                        existing -> {
+                                            // 기존 provider 정보 업데이트 (필요한 경우)
+                                            if (existing.getName() == null || existing.getName().isEmpty()) {
+                                                existing.setName(provider.getName());
+                                                existing.setLogoPath(provider.getLogoPath());
+                                                providerRepository.save(existing);
+                                            }
+                                        },
+                                        () -> providerRepository.save(provider)
+                                );
+                    });
+                    log.info("Processed {} TV providers", providers.size());
+                })
+                .block();
+    }
+
+    @Transactional
+    public void syncNowPlayingMovies(int maxPages) {
+        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
+        syncMovies(tmdbMovieApiClient::getNowPlayingMovies, maxPages, "now playing");
+    }
+
+    @Transactional
+    public void syncUpcomingMovies(int maxPages) {
+        log.info("Starting upcoming movies synchronization for {} pages...", maxPages);
+        syncMovies(tmdbMovieApiClient::getUpcomingMovies, maxPages, "upcoming");
+    }
+
+    @Transactional
+    public void syncOnTheAirTvs(int maxPages) {
+        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
+        syncTvs(tmdbTvApiClient::getOnTheAirTvs, maxPages, "now playing");
+    }
+
+    @Transactional
+    public void syncPopular(int maxPages) {
+        log.info("Starting popular movies synchronization for {} pages...", maxPages);
+        syncMovies(tmdbMovieApiClient::getPopularMovies, maxPages, "popular");
+
+        log.info("Starting popular tvs synchronization for {} pages...", maxPages);
+        syncTvs(tmdbTvApiClient::getPopularTvs, maxPages, "popular");
+    }
+
+    @Transactional
+    public void syncTopRated(int maxPages) {
+        log.info("Starting top-rated movies synchronization for {} pages...", maxPages);
+        syncMovies(tmdbMovieApiClient::getTopRatedMovies, maxPages, "top-rated");
+
+        log.info("Starting top-rated tvs synchronization for {} pages...", maxPages);
+        syncTvs(tmdbTvApiClient::getTopRatedTvs, maxPages, "top-rated");
+    }
+
+    @Transactional
+    public void syncMovieFullDetails(List<Long> movieIds) {
+        log.info("Starting full details sync for {} movies", movieIds.size());
+
+        Flux.fromIterable(movieIds)
+                .concatMap(movieId -> {
+                    log.info("Fetching full details for movie ID: {}", movieId);
+                    return tmdbMovieApiClient.getMovieFullDetail(movieId)
+                            .delayElement(Duration.ofMillis(250))
+                            .onErrorResume(error -> {
+                                log.error("Error fetching full details for movie {}: {}", movieId, error.getMessage());
+                                return Mono.empty();
+                            });
+                })
+                .doOnNext(fullDetail -> {
+                    // 한 번에 모든 정보 저장
+                    processMovieFullDetail(fullDetail);
+                    log.info("Processed full details for movie: {}", fullDetail.getTitle());
+                })
+                .blockLast();
+    }
+
+    @Transactional
+    public void syncTvFullDetails(List<Long> tvIds) {
+        log.info("Starting full details sync for {} tvs", tvIds.size());
+
+        Flux.fromIterable(tvIds)
+                .concatMap(tvId -> {
+                    log.info("Fetching full details for tv ID: {}", tvId);
+                    return tmdbTvApiClient.getTvFullDetail(tvId)
+                            .delayElement(Duration.ofMillis(250))
+                            .onErrorResume(error -> {
+                                log.error("Error fetching full details for tv {}: {}", tvId, error.getMessage());
+                                return Mono.empty();
+                            });
+                })
+                .doOnNext(fullDetail -> {
+                    // 한 번에 모든 정보 저장
+                    processTvFullDetail(fullDetail);
+                    log.info("Processed full details for tv: {}", fullDetail.getName());
+                })
+                .blockLast();
+    }
+
+    // 통합 처리 메서드
+    private void processMovieFullDetail(ContentFullDetailResponse fullDetail) {
+        // 1. 기본 상세 정보 업데이트
+        updateContentWithDetails(fullDetail, "movie");
+
+        // 2. Credits 저장
+        if (fullDetail.getCredits() != null) {
+            fullDetail.getCredits().setId(fullDetail.getId()); // ID 설정
+            saveCredits(fullDetail.getCredits(), "movie");
+        }
+
+        // 4. Videos 저장
+        if (fullDetail.getVideos() != null) {
+            fullDetail.getVideos().setId(fullDetail.getId());
+            saveVideos(fullDetail.getVideos(), "movie");
+        }
+
+        // 5. Watch Providers 저장
+        if (fullDetail.getWatchProviders() != null) {
+            fullDetail.getWatchProviders().setId(fullDetail.getId());
+            saveWatchProviders(fullDetail.getWatchProviders(), "movie");
+        }
+    }
+
+    private void processTvFullDetail(ContentFullDetailResponse fullDetail) {
+        // 1. 기본 상세 정보 업데이트
+        updateContentWithDetails(fullDetail, "tv");
+
+        // 2. Credits 저장
+        if (fullDetail.getCredits() != null) {
+            fullDetail.getCredits().setId(fullDetail.getId());
+            saveCredits(fullDetail.getCredits(), "tv");
+        }
+
+        // 4. Videos 저장
+        if (fullDetail.getVideos() != null) {
+            fullDetail.getVideos().setId(fullDetail.getId());
+            saveVideos(fullDetail.getVideos(), "tv");
+        }
+
+        // 5. Watch Providers 저장
+        if (fullDetail.getWatchProviders() != null) {
+            fullDetail.getWatchProviders().setId(fullDetail.getId());
+            saveWatchProviders(fullDetail.getWatchProviders(), "tv");
+        }
+    }
+
+    private void syncMovies(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall,
+                            int maxPages, String type) {
+        List<Content> allMovies = new ArrayList<>();
+
+        Flux.range(1, maxPages)
+                .concatMap(page -> {
+                    log.info("Fetching {} movies page {}/{}", type, page, maxPages);
+                    return apiCall.apply(page)
+                            .delayElement(Duration.ofMillis(250)); // API rate limiting
+                })
+                .doOnNext(response -> {
+                    log.info("Received {} movies from page {}",
+                            response.getResults().size(), response.getPage());
+                })
+                .flatMapIterable(ContentPageResponse::getResults)
+                .map(Content::movieFrom)
+                .buffer(100) // Batch processing
+                .doOnNext(movies -> {
+                    contentRepository.saveAll(movies);
+                    allMovies.addAll(movies);
+                    log.info("Saved batch of {} movies, total: {}", movies.size(), allMovies.size());
+                })
+                .doOnComplete(() -> log.info("Completed {} movies sync. Total movies saved: {}",
+                        type, allMovies.size()))
+                .doOnError(error -> log.error("Error during {} movies sync: {}", type, error.getMessage()))
+                .blockLast();
+    }
+
+    private void syncTvs(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall,
+                         int maxPages, String type) {
+        List<Content> allMovies = new ArrayList<>();
+
+        Flux.range(1, maxPages)
+                .concatMap(page -> {
+                    log.info("Fetching {} tvs page {}/{}", type, page, maxPages);
+                    return apiCall.apply(page)
+                            .delayElement(Duration.ofMillis(250)); // API rate limiting
+                })
+                .doOnNext(response -> {
+                    log.info("Received {} tvs from page {}",
+                            response.getResults().size(), response.getPage());
+                })
+                .flatMapIterable(ContentPageResponse::getResults)
+                .map(Content::tvFrom)
+                .buffer(100) // Batch processing
+                .doOnNext(tvs -> {
+                    contentRepository.saveAll(tvs);
+                    allMovies.addAll(tvs);
+                    log.info("Saved batch of {} tvs, total: {}", tvs.size(), allMovies.size());
+                })
+                .doOnComplete(() -> log.info("Completed {} tvs sync. Total tvs saved: {}",
+                        type, allMovies.size()))
+                .doOnError(error -> log.error("Error during {} tvs sync: {}", type, error.getMessage()))
+                .blockLast();
+    }
+
+    private void updateContentWithDetails(ContentDetailResponse detail, String type) {
+        ContentId contentId = new ContentId(detail.getId(), type);
+
+        contentRepository.findById(contentId).ifPresent(content -> {
+            content.setRuntime(detail.getRuntime());
+            contentRepository.save(content);
+        });
+    }
+
+    private void saveCredits(CreditsResponse credits, String type) {
+        ContentId contentId = new ContentId(credits.getId(), type);
+
+        Content content = contentRepository.findById(contentId).orElse(null);
+        if (content == null) return;
+
+        // 기존 데이터 삭제
+        castRepository.deleteByContent_id(contentId);
+        crewRepository.deleteByContent_Id(contentId);
+
+        // Cast 저장
+        List<Cast> casts = credits.getCast().stream()
+                .limit(20) // 주요 출연진만
+                .map(castDto -> {
+                    // Actor 조회 또는 생성
+                    Actor actor = actorRepository.findById(castDto.getId())
+                            .orElseGet(() -> {
+                                Actor newActor = new Actor();
+                                newActor.setId(castDto.getId());
+                                newActor.setName(castDto.getName());
+                                newActor.setProfilePath(castDto.getProfilePath());
+                                newActor.setGender(castDto.getGender());
+                                return actorRepository.save(newActor);
+                            });
+
+                    Cast cast = new Cast();
+                    cast.setActor(actor);
+                    cast.setContent(content);
+                    // 캐릭터 이름 길이 체크
+                    String character = castDto.getCharacter();
+                    if (character != null && character.length() > 1000) {
+                        character = character.substring(0, 997) + "...";
+                    }
+                    cast.setCharacter(character);
+                    cast.setOrder(castDto.getOrder());
+                    return cast;
+                })
+                .collect(Collectors.toList());
+        castRepository.saveAll(casts);
+
+        // Crew 저장 (감독, 제작자 등 주요 인물만)
+        List<Crew> crews = credits.getCrew().stream()
+                .filter(crew -> Arrays.asList("Director", "Producer", "Writer")
+                        .contains(crew.getJob()))
+                .map(crewDto -> {
+                    // CrewMember 조회 또는 생성
+                    CrewMember crewMember = crewMemberRepository.findById(crewDto.getId())
+                            .orElseGet(() -> {
+                                CrewMember newCrewMember = new CrewMember();
+                                newCrewMember.setId(crewDto.getId());
+                                newCrewMember.setName(crewDto.getName());
+                                newCrewMember.setProfilePath(crewDto.getProfilePath());
+                                newCrewMember.setGender(crewDto.getGender());
+                                newCrewMember.setKnownForDepartment(crewDto.getDepartment());
+                                return crewMemberRepository.save(newCrewMember);
+                            });
+
+                    Crew crew = new Crew();
+                    crew.setCrewMember(crewMember);
+                    crew.setContent(content);
+                    crew.setJob(crewDto.getJob());
+                    return crew;
+                })
+                .collect(Collectors.toList());
+        crewRepository.saveAll(crews);
+    }
+
+    private void saveVideos(VideosResponse videos, String type) {
+        ContentId contentId = new ContentId(videos.getId(), type);
+
+        Content content = contentRepository.findById(contentId).orElse(null);
+        if (content == null) return;
+
+        videoRepository.deleteByContent_Id(contentId);
+
+        List<ContentVideo> contentVideos = videos.getResults().stream()
+                .filter(v -> "YouTube".equals(v.getSite()))
+                .filter(VideoResponse::getOfficial)
+                .limit(10) // 상위 10개만
+                .map(video -> {
+                    ContentVideo contentVideo = new ContentVideo();
+                    contentVideo.setId(video.getId());
+                    contentVideo.setContent(content);
+                    contentVideo.setName(video.getName());
+                    contentVideo.setKey(video.getKey());
+                    contentVideo.setType(video.getType());
+                    contentVideo.setOfficial(video.getOfficial());
+                    return contentVideo;
+                })
+                .collect(Collectors.toList());
+
+        videoRepository.saveAll(contentVideos);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    protected void saveWatchProviders(WatchProvidersResponse providers, String type) {
+        ContentId contentId = new ContentId(providers.getId(), type);
+
+        Content content = contentRepository.findById(contentId).orElse(null);
+        if (content == null) return;
+
+        watchProviderRepository.deleteByContent_Id(contentId);
+
+        // HashSet 대신 ArrayList 사용하여 hashCode 호출 방지
+        List<WatchProvider> watchProviders = new ArrayList<>();
+        Set<Integer> processedProviderIds = new HashSet<>(); // 중복 체크용
+
+        // 한국 제공자
+        if (providers.getResults() != null && providers.getResults().getKr() != null) {
+            WatchProviderCountry kr = providers.getResults().getKr();
+
+            // 모든 타입의 provider를 하나로 통합
+            List<WatchProviderInfo> allProviderInfos = new ArrayList<>();
+
+            // 스트리밍
+            if (kr.getFlatrate() != null) {
+                allProviderInfos.addAll(kr.getFlatrate());
+            }
+
+            // 대여
+            if (kr.getRent() != null) {
+                allProviderInfos.addAll(kr.getRent());
+            }
+
+            // 구매
+            if (kr.getBuy() != null) {
+                allProviderInfos.addAll(kr.getBuy());
+            }
+
+            // 중복 제거하며 WatchProvider 생성
+            for (WatchProviderInfo info : allProviderInfos) {
+                if (!processedProviderIds.contains(info.getProviderId())) {
+                    processedProviderIds.add(info.getProviderId());
+                    WatchProvider watchProvider = createSimpleWatchProvider(content, info, "KR");
+                    if (watchProvider != null) {
+                        watchProviders.add(watchProvider);
+                    }
+                }
+            }
+        }
+
+        watchProviderRepository.saveAll(watchProviders);
+    }
+
+    private WatchProvider createSimpleWatchProvider(Content content, WatchProviderInfo info, String country) {
+        // Provider 조회 또는 생성
+        Provider provider = providerRepository.findById(info.getProviderId())
+                .orElseGet(() -> {
+                    Provider newProvider = new Provider();
+                    newProvider.setId(info.getProviderId());
+                    newProvider.setName(info.getProviderName());
+                    newProvider.setLogoPath(info.getLogoPath());
+                    return providerRepository.save(newProvider);
+                });
+
+        WatchProvider watchProvider = new WatchProvider();
+        watchProvider.setProvider(provider);
+        watchProvider.setContent(content);
+
+        return watchProvider;
+    }
+
 }

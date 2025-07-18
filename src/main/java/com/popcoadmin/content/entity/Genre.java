@@ -1,22 +1,25 @@
 package com.popcoadmin.content.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.popcoadmin.content.dto.response.genre.GenreResponse;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Builder
-@Getter
+@Table(name = "genre")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Genre {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long genreId;
+    private Integer id;
+
+    @Column(nullable = false)
     private String name;
+
+    public static Genre from(GenreResponse dto) {
+        Genre genre = new Genre();
+        genre.setId(dto.getId());
+        genre.setName(dto.getName());
+        return genre;
+    }
 }

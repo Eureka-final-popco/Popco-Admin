@@ -1,9 +1,9 @@
 package com.popcoadmin.content.repository;
 
-import com.popcoadmin.content.entity.Director;
+import com.popcoadmin.content.entity.Genre;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DirectorRepository extends JpaRepository<Director, Long> {
+public interface GenreRepository extends JpaRepository<Genre, Integer> {
 }
