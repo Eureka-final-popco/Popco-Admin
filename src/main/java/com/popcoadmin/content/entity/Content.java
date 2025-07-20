@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Entity
-@Table(name = "content")
+@Table(name = "contents")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -46,10 +46,10 @@ public class Content {
 
     @ElementCollection
     @CollectionTable(
-            name = "content_genre",
+            name = "content_genres",
             joinColumns = {
                     @JoinColumn(name = "content_id",   referencedColumnName = "id"),
-                    @JoinColumn(name = "content_type", referencedColumnName = "type")
+                    @JoinColumn(name = "type", referencedColumnName = "type")
             }
     )
     @Column(name = "genre_id")

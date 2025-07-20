@@ -7,6 +7,8 @@ import com.popcoadmin.quiz.dto.response.QuizOptionResponseDto;
 import com.popcoadmin.quiz.entity.Quiz;
 import com.popcoadmin.quiz.entity.QuizOption;
 import com.popcoadmin.quiz.entity.QuizQuestion;
+import com.popcoadmin.quiz.entity.key.QuizOptionId;
+import com.popcoadmin.quiz.entity.key.QuizQuestionId;
 import com.popcoadmin.quiz.repository.QuizOptionRepository;
 import com.popcoadmin.quiz.repository.QuizQuestionRepository;
 import com.popcoadmin.quiz.service.QuizOptionService;
@@ -17,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.popcoadmin.exception.business.QuizOptionNotFoundException;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +41,8 @@ public class QuizOptionServiceImpl implements QuizOptionService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "선택지 내용은 필수입니다.");
         }
 
-        QuizQuestion quizQuestion = quizQuestionRepository.findById(questionId)
+        QuizQuestionId quizQuestionId = QuizQuestionId.of(questionId, quizId);
+        QuizQuestion quizQuestion = quizQuestionRepository.findById(quizQuestionId)
                 .orElseThrow(() -> new QuizQuestionNotFoundException("Question ID: " + questionId + " 에 해당하는 질문을 찾을 수 없습니다."));
 
         if (!quizQuestion.getQuiz().getQuizId().equals(quizId)) {
@@ -69,7 +74,8 @@ public class QuizOptionServiceImpl implements QuizOptionService {
     @Override
     @Transactional(readOnly = true)
     public QuizOptionResponseDto getQuizOptionById(Long optionId, Long questionId, Long quizId) {
-        QuizOption quizOption = quizOptionRepository.findById(optionId)
+        QuizOptionId quizOptionId = QuizOptionId.of(optionId, questionId, quizId);
+        QuizOption quizOption = quizOptionRepository.findById(quizOptionId)
                 .orElseThrow(() -> new QuizOptionNotFoundException("Option ID: " + optionId + " 에 해당하는 선택지를 찾을 수 없습니다."));
 
         if (!quizOption.getQuizQuestion().getQuestionId().equals(questionId) ||
@@ -82,15 +88,32 @@ public class QuizOptionServiceImpl implements QuizOptionService {
     @Override
     @Transactional(readOnly = true)
     public List<QuizOptionResponseDto> getQuizOptionsByQuestionId(Long questionId, Long quizId) {
-        return quizOptionRepository.findByQuizQuestion_QuestionIdAndQuizQuestion_Quiz_QuizId(questionId, quizId).stream()
-                .map(QuizOptionResponseDto::from)
-                .collect(Collectors.toList());
+//        return quizOptionRepository.findByQuizQuestion_QuestionIdAndQuizQuestion_Quiz_QuizId(questionId, quizId).stream()
+//                .map(QuizOptionResponseDto::from)
+//                .collect(Collectors.toList());
+
+        QuizQuestionId quizQuestionId = QuizQuestionId.of(questionId, quizId);
+
+        // 1개의 질문을 찾음
+        Optional<QuizQuestion> quizQuestion = quizQuestionRepository.findById(quizQuestionId);
+
+        if (quizQuestion.isPresent()) {
+            // 그 질문에 속한 여러개의 선택지들을 찾음
+            List<QuizOption> options = quizOptionRepository.findByQuizQuestion(quizQuestion.get());
+
+            return options.stream()
+                    .map(QuizOptionResponseDto::from)
+                    .collect(Collectors.toList());
+        }
+
+        return Collections.emptyList();
     }
 
     @Override
     @Transactional
     public QuizOptionResponseDto updateQuizOption(Long optionId, Long questionId, Long quizId, QuizOptionRequestDto request) {
-        QuizOption option = quizOptionRepository.findById(optionId) // <-- QuizOptionId 객체 사용 제거
+        QuizOptionId quizOptionId = QuizOptionId.of(optionId, questionId, quizId);
+        QuizOption option = quizOptionRepository.findById(quizOptionId)
                 .orElseThrow(() -> new QuizOptionNotFoundException("Option ID: " + optionId + " 에 해당하는 선택지를 찾을 수 없습니다."));
 
         if (!option.getQuizQuestion().getQuestionId().equals(questionId) ||
@@ -125,7 +148,8 @@ public class QuizOptionServiceImpl implements QuizOptionService {
     @Override
     @Transactional
     public void deleteQuizOption(Long optionId, Long questionId, Long quizId) {
-        QuizOption optionToDelete = quizOptionRepository.findById(optionId)
+        QuizOptionId quizOptionId = QuizOptionId.of(optionId, questionId, quizId);
+        QuizOption optionToDelete = quizOptionRepository.findById(quizOptionId)
                 .orElseThrow(() -> new QuizOptionNotFoundException("Option ID: " + optionId + " 에 해당하는 선택지를 찾을 수 없습니다."));
 
         if (!optionToDelete.getQuizQuestion().getQuestionId().equals(questionId) ||
@@ -144,6 +168,6 @@ public class QuizOptionServiceImpl implements QuizOptionService {
             }
         }
 
-        quizOptionRepository.deleteById(optionId);
+        quizOptionRepository.deleteById(quizOptionId);
     }
 }
