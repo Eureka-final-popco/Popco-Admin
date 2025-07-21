@@ -6,5 +6,5 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class ExampleRequestDto {
-    private boolean cicdTest;
+    private String cicdTest;
 }
