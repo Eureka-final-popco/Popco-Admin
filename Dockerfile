@@ -8,8 +8,7 @@ RUN gradle build -x test
 FROM openjdk:17-jdk-slim
 WORKDIR /app
 COPY --from=builder /build/build/libs/Popco-Admin-0.0.1-SNAPSHOT.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+ENTRYPOINT ["java", "-Dspring.config.additional-location=file:/app/config/", "-jar", "app.jar"]
 # 사용 방법
 # docker build -t popco-admin:latest .
 # docker run -p 8080:8080 popco-admin:latest
