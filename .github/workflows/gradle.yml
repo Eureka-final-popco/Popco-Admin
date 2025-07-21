@@ -64,8 +64,8 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: |
-          ${{ secrets.DOCKER_HUB_USERNAME }}/popco-${{ github.event.repository.name | split: '-' | last }}:${{ github.sha }}
-          ${{ secrets.DOCKER_HUB_USERNAME }}/popco-${{ github.event.repository.name | split: '-' | last }}:latest
+          ${{ secrets.DOCKER_HUB_USERNAME }}/popco-admin:${{ github.sha }}
+          ${{ secrets.DOCKER_HUB_USERNAME }}/popco-admin:latest
 
   dependency-submission:
     runs-on: ubuntu-latest
