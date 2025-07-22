@@ -14,7 +14,7 @@ import java.util.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"casts", "crews", "videos", "watchProviders"})
+@ToString(exclude = {"castMembers", "crews", "videos", "watchProviders"})
 public class Content {
 
     @EmbeddedId
@@ -46,7 +46,7 @@ public class Content {
 
     @ElementCollection
     @CollectionTable(
-            name = "content_genre",
+            name = "content_genres",
             joinColumns = {
                     @JoinColumn(name = "content_id",   referencedColumnName = "id"),
                     @JoinColumn(name = "content_type", referencedColumnName = "type")
@@ -57,7 +57,7 @@ public class Content {
 
     // 관계 매핑
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Cast> casts = new ArrayList<>();
+    private List<CastMember> castMembers = new ArrayList<>();
 
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Crew> crews = new ArrayList<>();
