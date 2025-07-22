@@ -22,7 +22,7 @@ public class Crew {
     @ManyToOne
     @JoinColumns({
             @JoinColumn(name = "content_id",  referencedColumnName = "id",   nullable = false),
-            @JoinColumn(name = "content_type", referencedColumnName = "type", nullable = false)
+            @JoinColumn(name = "type", referencedColumnName = "type", nullable = false)
     })
     private Content content;
 

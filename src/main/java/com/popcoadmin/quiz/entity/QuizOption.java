@@ -1,6 +1,7 @@
 package com.popcoadmin.quiz.entity;
 
 import com.popcoadmin.quiz.dto.request.QuizOptionRequestDto;
+import com.popcoadmin.quiz.entity.key.QuizOptionId;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -19,18 +20,15 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class QuizOption {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "option_id")
-    private Long optionId;
+    @EmbeddedId
+    private QuizOptionId optionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id", nullable = false)
+    @JoinColumns({
+            @JoinColumn(name = "question_id", referencedColumnName = "question_id", insertable = false, updatable = false),
+            @JoinColumn(name = "quiz_id", referencedColumnName = "quiz_id", insertable = false, updatable = false)
+    })
     private QuizQuestion quizQuestion;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id", nullable = false)
-    private Quiz quiz;
 
     @Column(nullable = false)
     private Boolean isCorrect;
@@ -47,11 +45,16 @@ public class QuizOption {
     private LocalDateTime updatedAt;
 
     public static QuizOption of(QuizOptionRequestDto request, QuizQuestion quizQuestion, Quiz quiz) {
+        QuizOptionId optionId = QuizOptionId.of(
+                null,
+                quizQuestion.getQuestionId().getQuestionId(),
+                quiz.getQuizId()
+        );
+
         return QuizOption.builder()
+                .optionId(optionId)
                 .isCorrect(request.getIsCorrect())
                 .content(request.getContent())
-                .quizQuestion(quizQuestion)
-                .quiz(quiz)
                 .build();
     }
 
@@ -65,10 +68,16 @@ public class QuizOption {
     }
 
     public void setQuizQuestion(QuizQuestion quizQuestion) {
-        this.quizQuestion = quizQuestion;
+        if (this.optionId == null) {
+            this.optionId = new QuizOptionId();
+        }
+        this.optionId.setQuestionId(quizQuestion.getQuestionId().getQuestionId());
     }
 
     public void setQuiz(Quiz quiz) {
-        this.quiz = quiz;
+        if (this.optionId == null) {
+            this.optionId = new QuizOptionId();
+        }
+        this.optionId.setQuizId(quiz.getQuizId());
     }
 }

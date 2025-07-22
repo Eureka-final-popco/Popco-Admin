@@ -1,34 +1,28 @@
 package com.popcoadmin.persona.entity;
 
-import com.popcoadmin.content.entity.Genre;
+import com.popcoadmin.persona.enums.Type;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
-@Table(name = "persona_genres")
+@Table(name = "persona_details")
 @Entity
 @Builder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonaGenre {
-
+public class PersonaDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long personaGenreId;
+    private Long personaDetailId;
+
+    @Enumerated(EnumType.STRING)
+    private Type type;
+    private String imgPath;
 
     @ManyToOne
     @JoinColumn(name = "persona_id")
     private Persona persona;
-
-    @ManyToOne
-    @JoinColumn(name = "genre_id")
-    private Genre genre;
-
-    @Column(name = "score")
-    private BigDecimal score;
 }

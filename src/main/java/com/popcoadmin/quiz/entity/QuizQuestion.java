@@ -1,6 +1,7 @@
 package com.popcoadmin.quiz.entity;
 
 import com.popcoadmin.quiz.dto.request.QuizQuestionRequestDto;
+import com.popcoadmin.quiz.entity.key.QuizQuestionId;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -14,19 +15,18 @@ import java.util.List;
 
 @Entity
 @Table(name = "quiz_questions")
-@Getter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class QuizQuestion {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "question_id")
-    private Long questionId;
+    @EmbeddedId
+    private QuizQuestionId questionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("quizId")
     @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
 
@@ -52,8 +52,11 @@ public class QuizQuestion {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "quizQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumns({
+            @JoinColumn(name = "question_id", referencedColumnName = "question_id"),
+            @JoinColumn(name = "quiz_id", referencedColumnName = "quiz_id")
+    })
     private List<QuizOption> options = new ArrayList<>();
 
     public static QuizQuestion of(QuizQuestionRequestDto request) {
