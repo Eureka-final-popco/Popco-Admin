@@ -13,6 +13,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Table(name = "personas")
 @Entity
 @Builder
 @Getter
@@ -21,38 +22,37 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 public class Persona {
     @Id
+    @Column(name = "persona_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long personaId;
 
     private String name;
     private String description;
     private String tag;
-    private String imgPath;
 
     @CreatedDate
     private LocalDateTime createdAt;
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @OneToMany
+    @OneToMany(mappedBy = "persona", cascade = CascadeType.ALL)
     List<PersonaGenre> personaGenre;
+
+    @OneToMany(mappedBy = "persona", cascade = CascadeType.ALL)
+    List<PersonaDetail> personaDetail;
 
     public static Persona from(PersonaRequestDto request) {
         return Persona.builder()
-                .name(request.getName())
                 .description(request.getDescription())
                 .tag(request.getTag())
-                .imgPath(request.getImgPath())
                 .build();
     }
 
     public static Persona from(PersonaRequestDto request, Long id) {
         return Persona.builder()
-                .id(id)
-                .name(request.getName())
+                .personaId(id)
                 .description(request.getDescription())
                 .tag(request.getTag())
-                .imgPath(request.getImgPath())
                 .build();
     }
 }

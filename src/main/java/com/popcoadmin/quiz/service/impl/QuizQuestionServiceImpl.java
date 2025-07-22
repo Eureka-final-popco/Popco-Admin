@@ -8,6 +8,7 @@ import com.popcoadmin.quiz.dto.response.QuizQuestionResponseDto;
 import com.popcoadmin.quiz.entity.Quiz;
 import com.popcoadmin.quiz.entity.QuizOption;
 import com.popcoadmin.quiz.entity.QuizQuestion;
+import com.popcoadmin.quiz.entity.key.QuizQuestionId;
 import com.popcoadmin.quiz.repository.QuizQuestionRepository;
 import com.popcoadmin.quiz.repository.QuizRepository;
 import com.popcoadmin.quiz.service.QuizQuestionService;
@@ -80,7 +81,9 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
     @Override
     @Transactional
     public QuizQuestionResponseDto getQuizQuestionById(Long questionId, Long quizId) {
-        QuizQuestion quizQuestion = quizQuestionRepository.findById(questionId)
+
+        QuizQuestionId quizQuestionId = QuizQuestionId.of(questionId, quizId);
+        QuizQuestion quizQuestion = quizQuestionRepository.findById(quizQuestionId)
                 .orElseThrow(() -> new QuizQuestionNotFoundException("ID: " + questionId + " 에 해당하는 질문을 찾을 수 없습니다."));
 
         if (!quizQuestion.getQuiz().getQuizId().equals(quizId)) {
@@ -101,7 +104,8 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
     @Override
     @Transactional
     public QuizQuestionResponseDto updateQuizQuestion(Long questionId, Long quizId, QuizQuestionRequestDto request) {
-        QuizQuestion question = quizQuestionRepository.findById(questionId)
+        QuizQuestionId quizQuestionId = QuizQuestionId.of(questionId, quizId);
+        QuizQuestion question = quizQuestionRepository.findById(quizQuestionId)
                 .orElseThrow(() -> new QuizQuestionNotFoundException("ID: " + questionId + " 에 해당하는 질문을 찾을 수 없습니다."));
 
         if (!question.getQuiz().getQuizId().equals(quizId)) {
@@ -111,7 +115,7 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
         Quiz quiz = question.getQuiz();
 
         if (request.getQuestionOrder() != null) {
-            quizQuestionRepository.findByQuiz_QuizIdAndQuestionOrder(quizId, request.getQuestionOrder())
+            quizQuestionRepository.findById(quizQuestionId)
                     .ifPresent(existingQuestion -> {
                         if (!existingQuestion.getQuestionId().equals(questionId)) {
                             throw new BusinessException(ErrorCode.DUPLICATE_QUESTION_ORDER, "해당 퀴즈에 이미 동일한 순서의 질문이 존재합니다: " + request.getQuestionOrder());
@@ -145,13 +149,14 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
     @Override
     @Transactional
     public void deleteQuizQuestion(Long questionId, Long quizId) {
-        QuizQuestion question = quizQuestionRepository.findById(questionId)
+        QuizQuestionId quizQuestionId = QuizQuestionId.of(questionId, quizId);
+        QuizQuestion question= quizQuestionRepository.findById(quizQuestionId)
                 .orElseThrow(() -> new QuizQuestionNotFoundException("ID: " + questionId + " 에 해당하는 질문을 찾을 수 없습니다."));
 
         if (!question.getQuiz().getQuizId().equals(quizId)) {
             throw new QuizQuestionNotFoundException("ID: " + questionId + ", Quiz ID: " + quizId + " 에 해당하는 질문을 찾을 수 없습니다.");
         }
 
-        quizQuestionRepository.deleteById(questionId);
+        quizQuestionRepository.deleteById(quizQuestionId);
     }
 }

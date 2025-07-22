@@ -14,10 +14,8 @@ public class PersonaResponseDto {
 
     public static PersonaResponseDto from(Persona persona){
         return PersonaResponseDto.builder()
-                .name(persona.getName())
                 .description(persona.getDescription())
                 .tag(persona.getTag())
-                .imgPath(persona.getImgPath())
                 .build();
     }
 }

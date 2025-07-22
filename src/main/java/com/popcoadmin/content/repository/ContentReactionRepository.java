@@ -30,4 +30,5 @@ public interface ContentReactionRepository extends
             @Param("endDateTime") LocalDateTime endDateTime,
             Pageable pageable
     );
+
 }

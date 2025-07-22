@@ -35,5 +35,5 @@ public class UserDetail {
     @MapsId
     @JoinColumn(name = "user_id")
     private User user;
-
+  
 }

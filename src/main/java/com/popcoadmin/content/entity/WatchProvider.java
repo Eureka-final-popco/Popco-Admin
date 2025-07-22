@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.util.Objects;
 
 @Entity
-@Table(name = "watch_provider")
+@Table(name = "watch_providers")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,7 +24,7 @@ public class WatchProvider {
     @ManyToOne
     @JoinColumns({
             @JoinColumn(name = "content_id", referencedColumnName = "id", nullable = false),
-            @JoinColumn(name = "content_type", referencedColumnName = "type", nullable = false)
+            @JoinColumn(name = "type", referencedColumnName = "type", nullable = false)
     })
     private Content content;
 

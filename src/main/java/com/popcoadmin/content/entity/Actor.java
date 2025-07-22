@@ -7,11 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "actor")
+@Table(name = "actors")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"castRoles"})
+@ToString(exclude = {"castMemberRoles"})
 public class Actor {
     @Id
     private Long id; // TMDB person ID
@@ -26,5 +26,5 @@ public class Actor {
     private Integer gender; // 0: Not specified, 1: Female, 2: Male, 3: Non-binary
 
     @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Cast> castRoles = new ArrayList<>();
+    private List<CastMember> castMemberRoles = new ArrayList<>();
 }
