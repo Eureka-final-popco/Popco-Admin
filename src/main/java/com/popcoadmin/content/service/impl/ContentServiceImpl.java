@@ -368,7 +368,7 @@ public class ContentServiceImpl implements ContentService {
         crewRepository.deleteByContent_Id(contentId);
 
         // Cast 저장
-        List<Cast> casts = credits.getCast().stream()
+        List<CastMembers> casts = credits.getCast().stream()
                 .limit(20) // 주요 출연진만
                 .map(castDto -> {
                     // Actor 조회 또는 생성
@@ -382,7 +382,7 @@ public class ContentServiceImpl implements ContentService {
                                 return actorRepository.save(newActor);
                             });
 
-                    Cast cast = new Cast();
+                    CastMembers cast = new CastMembers();
                     cast.setActor(actor);
                     cast.setContent(content);
                     // 캐릭터 이름 길이 체크

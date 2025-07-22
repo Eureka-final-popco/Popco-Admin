@@ -57,7 +57,7 @@ public class Content {
 
     // 관계 매핑
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Cast> casts = new ArrayList<>();
+    private List<CastMembers> casts = new ArrayList<>();
 
     @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Crew> crews = new ArrayList<>();
