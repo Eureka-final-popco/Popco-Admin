@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"castRoles"})
+@ToString(exclude = {"castMemberRoles"})
 public class Actor {
     @Id
     private Long id; // TMDB person ID
