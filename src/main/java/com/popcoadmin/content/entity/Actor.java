@@ -26,5 +26,5 @@ public class Actor {
     private Integer gender; // 0: Not specified, 1: Female, 2: Male, 3: Non-binary
 
     @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CastMembers> castRoles = new ArrayList<>();
+    private List<CastMember> castMemberRoles = new ArrayList<>();
 }
