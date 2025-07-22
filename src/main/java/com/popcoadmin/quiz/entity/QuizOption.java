@@ -11,7 +11,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "quiz_option")
+@Table(name = "quiz_options")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

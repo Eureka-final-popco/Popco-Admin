@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "persona_genres")
 @Builder
 @Getter
 @NoArgsConstructor
