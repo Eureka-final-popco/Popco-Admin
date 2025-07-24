@@ -292,8 +292,7 @@ public class ContentServiceImpl implements ContentService {
         }
     }
 
-    private void syncMovies(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall,
-                            int maxPages, String type) {
+    private void syncMovies(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
         List<Content> allMovies = new ArrayList<>();
 
         Flux.range(1, maxPages)
@@ -320,8 +319,7 @@ public class ContentServiceImpl implements ContentService {
                 .blockLast();
     }
 
-    private void syncTvs(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall,
-                         int maxPages, String type) {
+    private void syncTvs(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
         List<Content> allMovies = new ArrayList<>();
 
         Flux.range(1, maxPages)
@@ -352,6 +350,9 @@ public class ContentServiceImpl implements ContentService {
         ContentId contentId = new ContentId(detail.getId(), type);
 
         contentRepository.findById(contentId).ifPresent(content -> {
+            if ("tv".equals(type)) {
+                content.setReleaseDate(detail.getLastAirDate());
+            }
             content.setRuntime(detail.getRuntime());
             contentRepository.save(content);
         });
