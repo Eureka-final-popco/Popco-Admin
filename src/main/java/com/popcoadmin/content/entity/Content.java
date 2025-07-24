@@ -87,7 +87,6 @@ public class Content {
         content.setId(contentId);
         content.setTitle(dto.getName());
         content.setOverview(dto.getOverview());
-        content.setReleaseDate(dto.getReleaseDate());
         content.setRatingCount(0L);
         content.setRatingAverage(BigDecimal.valueOf(0));
         content.setPosterPath(dto.getPosterPath());
