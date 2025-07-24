@@ -1,5 +1,6 @@
 package com.popcoadmin.content.dto.response.content;
 
+import com.popcoadmin.content.entity.Content;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PopularContentStats {
-    private long contentId;
-    private String type;
+    private Content content;
     private long likeCount;
 }

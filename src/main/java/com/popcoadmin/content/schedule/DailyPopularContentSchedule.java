@@ -19,11 +19,6 @@ public class DailyPopularContentSchedule {
     private final JobLauncher jobLauncher;
     private final Job popularContentJob;
 
-    /**
-     * 매일 오전 2시 5분에 실행
-     * 오전 2시 기준으로 하루치 데이터를 집계하므로,
-     * 2시 정각보다 조금 늦게 실행하여 데이터가 완전히 적재된 후 처리
-     */
     @Scheduled(cron = "0 5 2 * * *")
     public void runPopularContentJob() {
         try {

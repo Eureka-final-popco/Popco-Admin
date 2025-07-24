@@ -1,6 +1,6 @@
 package com.popcoadmin.content.dto.request;
 
-import com.popcoadmin.content.entity.enums.ContentType;
+import com.popcoadmin.content.entity.enums.ContentTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +15,7 @@ public class ContentRequestDto {
     private LocalDateTime releaseDate;
     private Integer ratingCount;
     private String backdropPath;
-    private ContentType type;
+    private ContentTypes type;
     private String posterPath;
     private String trailerPath;
     private Integer runtime;
