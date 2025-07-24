@@ -6,11 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "cast_member")
+@Table(name = "cast_members")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cast {
+public class CastMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,7 +22,7 @@ public class Cast {
     @ManyToOne
     @JoinColumns({
             @JoinColumn(name = "content_id",  referencedColumnName = "id",   nullable = false),
-            @JoinColumn(name = "content_type", referencedColumnName = "type", nullable = false)
+            @JoinColumn(name = "type", referencedColumnName = "type", nullable = false)
     })
     private Content content;
 

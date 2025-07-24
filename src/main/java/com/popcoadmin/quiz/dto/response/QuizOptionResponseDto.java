@@ -20,8 +20,8 @@ public class QuizOptionResponseDto {
 
     public static QuizOptionResponseDto from(QuizOption option) {
         return QuizOptionResponseDto.builder()
-                .optionId(option.getOptionId())
-                .questionId(option.getQuizQuestion() != null ? option.getQuizQuestion().getQuestionId() : null)
+                .optionId(option.getOptionId().getOptionId())
+                .questionId(option.getQuizQuestion() != null ? option.getOptionId().getQuestionId() : null)
                 .quizId(option.getQuizQuestion() != null && option.getQuizQuestion().getQuiz() != null ?
                         option.getQuizQuestion().getQuiz().getQuizId() : null)
                 .content(option.getContent())

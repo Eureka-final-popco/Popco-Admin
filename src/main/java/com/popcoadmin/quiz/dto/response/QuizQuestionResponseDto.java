@@ -33,7 +33,7 @@ public class QuizQuestionResponseDto {
         }
 
         return QuizQuestionResponseDto.builder()
-                .questionId(question.getQuestionId())
+                .questionId(question.getQuestionId().getQuestionId())
                 .quizId(question.getQuiz() != null ? question.getQuiz().getQuizId() : null)
                 .content(question.getContent())
                 .questionOrder(question.getQuestionOrder())

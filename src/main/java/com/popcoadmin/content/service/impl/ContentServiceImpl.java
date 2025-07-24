@@ -367,8 +367,8 @@ public class ContentServiceImpl implements ContentService {
         castRepository.deleteByContent_id(contentId);
         crewRepository.deleteByContent_Id(contentId);
 
-        // Cast 저장
-        List<Cast> casts = credits.getCast().stream()
+        // CastMember 저장
+        List<CastMember> castMembers = credits.getCast().stream()
                 .limit(20) // 주요 출연진만
                 .map(castDto -> {
                     // Actor 조회 또는 생성
@@ -382,20 +382,20 @@ public class ContentServiceImpl implements ContentService {
                                 return actorRepository.save(newActor);
                             });
 
-                    Cast cast = new Cast();
-                    cast.setActor(actor);
-                    cast.setContent(content);
+                    CastMember castMember = new CastMember();
+                    castMember.setActor(actor);
+                    castMember.setContent(content);
                     // 캐릭터 이름 길이 체크
                     String character = castDto.getCharacter();
                     if (character != null && character.length() > 1000) {
                         character = character.substring(0, 997) + "...";
                     }
-                    cast.setCharacter(character);
-                    cast.setOrder(castDto.getOrder());
-                    return cast;
+                    castMember.setCharacter(character);
+                    castMember.setOrder(castDto.getOrder());
+                    return castMember;
                 })
                 .collect(Collectors.toList());
-        castRepository.saveAll(casts);
+        castRepository.saveAll(castMembers);
 
         // Crew 저장 (감독, 제작자 등 주요 인물만)
         List<Crew> crews = credits.getCrew().stream()
