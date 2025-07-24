@@ -10,24 +10,26 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Repository
 public interface ContentReactionRepository extends
         CrudRepository<ContentReaction, Long>, PagingAndSortingRepository<ContentReaction, Long> {
     @Query("SELECT new com.popcoadmin.content.dto.response.content.PopularContentStats(" +
-            "cr.content.id.id, cr.content.id.type, COUNT(cr.content.id.id) as likeCount) " +
+            "cr.content, COUNT(cr.content.id.id) as likeCount) " +
             "FROM ContentReaction cr " +
             "WHERE cr.reaction = 'LIKE' " +
             "AND cr.createdAt >= :startDateTime " +
             "AND cr.createdAt < :endDateTime " +
+            "AND (:type IS NULL OR cr.content.id.type = :type) " +
             "GROUP BY cr.content.id.id, cr.content.id.type, cr.content.releaseDate " +
             "ORDER BY COUNT(cr.content.id.id) DESC, cr.content.releaseDate DESC")
-    Page<PopularContentStats> findPopularContentStats(
+    Page<PopularContentStats> findPopularContentStatsByType(
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("type") String type,
             Pageable pageable
     );
+
+
 }
