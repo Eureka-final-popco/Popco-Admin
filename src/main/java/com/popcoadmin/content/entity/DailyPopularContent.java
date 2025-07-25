@@ -1,5 +1,6 @@
 package com.popcoadmin.content.entity;
 
+import com.popcoadmin.content.entity.enums.BatchContentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +10,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 // 인기 콘텐츠 결과 엔티티
 @Entity
@@ -24,11 +24,12 @@ public class DailyPopularContent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "content_id", nullable = false)
-    private Long contentId;
-
-    @Column(name = "type", nullable = false)
-    private String type;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+            @JoinColumn(name = "content_id", referencedColumnName = "id", nullable = false),
+            @JoinColumn(name = "content_type", referencedColumnName = "type", nullable = false)
+    })
+    private Content content;
 
     @Column(name = "like_count", nullable = false)
     private Long likeCount;
@@ -39,5 +40,8 @@ public class DailyPopularContent {
 
     @Column(name = "ranking", nullable = false)
     private Integer ranking;
+
+    @Column(name = "batch_type", nullable = false)
+    private String batchContentType;
 
 }

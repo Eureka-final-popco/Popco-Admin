@@ -2,6 +2,7 @@ package com.popcoadmin.content.batch;
 
 import com.popcoadmin.content.dto.response.content.PopularContentStats;
 import com.popcoadmin.content.entity.DailyPopularContent;
+import com.popcoadmin.content.entity.enums.BatchContentType;
 import com.popcoadmin.content.repository.ContentReactionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -49,8 +50,10 @@ public class DailyPopularContentJobConfig {
     @Bean
     public Job popularContentJob() {
         return new JobBuilder(JOB_NAME, jobRepository)
-                .start(clearPreviousDataStep())
-                .next(popularContentStep())
+                .start(clearPreviousDataStep()) // 기존 데이터 제거
+                .next(buildPopularContentStep(BatchContentType.ALL))
+                .next(buildPopularContentStep(BatchContentType.MOVIE))
+                .next(buildPopularContentStep(BatchContentType.TV))
                 .build();
     }
 
@@ -62,12 +65,11 @@ public class DailyPopularContentJobConfig {
                 .build();
     }
 
-    @Bean
-    public Step popularContentStep() {
-        return new StepBuilder("popularContentStep", jobRepository)
+    public Step buildPopularContentStep(BatchContentType type) {
+        return new StepBuilder("popularContentStep_" + type.name(), jobRepository)
                 .<PopularContentStats, DailyPopularContent>chunk(100, platformTransactionManager)
-                .reader(popularContentReader())
-                .processor(popularContentProcessor())
+                .reader(createReader(type.getValue()))
+                .processor(popularContentProcessor(type))
                 .writer(popularContentWriter())
                 .build();
     }
@@ -107,11 +109,11 @@ public class DailyPopularContentJobConfig {
         };
     }
 
-    @Bean
-    public RepositoryItemReader<PopularContentStats> popularContentReader() {
+//    @Bean
+    public RepositoryItemReader<PopularContentStats> createReader(String type) {
         RepositoryItemReader<PopularContentStats> reader = new RepositoryItemReader<>();
         reader.setRepository(contentReactionRepository);
-        reader.setMethodName("findPopularContentStats");
+        reader.setMethodName("findPopularContentStatsByType");
 
         LocalDate yesterday = LocalDate.now().minusDays(2);
         LocalDateTime startOfDay = yesterday.atStartOfDay();
@@ -119,7 +121,8 @@ public class DailyPopularContentJobConfig {
 
         List<Object> arguments = Arrays.asList(
                 startOfDay,
-                endOfDay
+                endOfDay,
+                type
                 // Pageable은 RepositoryItemReader가 자동으로 추가
         );
         reader.setArguments(arguments);
@@ -134,9 +137,9 @@ public class DailyPopularContentJobConfig {
 
         return reader;
     }
-
-    @Bean
-    public ItemProcessor<PopularContentStats, DailyPopularContent> popularContentProcessor() {
+//
+//    @Bean
+    public ItemProcessor<PopularContentStats, DailyPopularContent> popularContentProcessor(BatchContentType type) {
         return new ItemProcessor<>() {
             private int rank = 1;
             private final LocalDate rankedDate = LocalDate.now().minusDays(1);
@@ -144,16 +147,16 @@ public class DailyPopularContentJobConfig {
             @Override
             public DailyPopularContent process(PopularContentStats stats) {
                 // 상위 20개만 처리
-                if (rank > 20) {
+                if (rank > 10) {
                     return null;
                 }
 
                 return DailyPopularContent.builder()
-                        .contentId(stats.getContentId())
-                        .type(stats.getType())
+                        .content(stats.getContent())
                         .likeCount(stats.getLikeCount())
                         .rankedDate(rankedDate)
                         .ranking(rank++)
+                        .batchContentType(type.name())
                         .build();
             }
         };
