@@ -21,7 +21,6 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.data.RepositoryItemReader;
 import org.springframework.batch.item.database.JpaItemWriter;
-import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -109,7 +108,6 @@ public class DailyPopularContentJobConfig {
         };
     }
 
-//    @Bean
     public RepositoryItemReader<PopularContentStats> createReader(String type) {
         RepositoryItemReader<PopularContentStats> reader = new RepositoryItemReader<>();
         reader.setRepository(contentReactionRepository);
@@ -123,7 +121,6 @@ public class DailyPopularContentJobConfig {
                 startOfDay,
                 endOfDay,
                 type
-                // Pageable은 RepositoryItemReader가 자동으로 추가
         );
         reader.setArguments(arguments);
 
@@ -137,8 +134,7 @@ public class DailyPopularContentJobConfig {
 
         return reader;
     }
-//
-//    @Bean
+
     public ItemProcessor<PopularContentStats, DailyPopularContent> popularContentProcessor(BatchContentType type) {
         return new ItemProcessor<>() {
             private int rank = 1;
@@ -146,12 +142,9 @@ public class DailyPopularContentJobConfig {
 
             @Override
             public DailyPopularContent process(PopularContentStats stats) {
-                System.out.println("Processing content: " + stats);
                 if (rank > 5) {
-                    System.out.println("Rank exceeded 5, skipping: " + rank);
                     return null;
                 }
-                System.out.println("Processing rank: " + rank + ", contentId: " + stats.getContent().getId());
                 return DailyPopularContent.builder()
                         .content(stats.getContent())
                         .likeCount(stats.getLikeCount())
