@@ -115,9 +115,9 @@ public class DailyPopularContentJobConfig {
         reader.setRepository(contentReactionRepository);
         reader.setMethodName("findPopularContentStatsByType");
 
-        LocalDate yesterday = LocalDate.now().minusDays(2);
+        LocalDate yesterday = LocalDate.now().minusDays(3);
         LocalDateTime startOfDay = yesterday.atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        LocalDateTime endOfDay = startOfDay.plusDays(3);
 
         List<Object> arguments = Arrays.asList(
                 startOfDay,
@@ -146,11 +146,12 @@ public class DailyPopularContentJobConfig {
 
             @Override
             public DailyPopularContent process(PopularContentStats stats) {
-                // 상위 20개만 처리
-                if (rank > 10) {
+                System.out.println("Processing content: " + stats);
+                if (rank > 5) {
+                    System.out.println("Rank exceeded 5, skipping: " + rank);
                     return null;
                 }
-
+                System.out.println("Processing rank: " + rank + ", contentId: " + stats.getContent().getId());
                 return DailyPopularContent.builder()
                         .content(stats.getContent())
                         .likeCount(stats.getLikeCount())
