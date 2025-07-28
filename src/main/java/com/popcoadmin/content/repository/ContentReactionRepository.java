@@ -19,8 +19,8 @@ public interface ContentReactionRepository extends
             "cr.content, COUNT(cr.content.id.id) as likeCount) " +
             "FROM ContentReaction cr " +
             "WHERE cr.reaction = 'LIKE' " +
-            "AND cr.createdAt >= :startDateTime " +
-            "AND cr.createdAt < :endDateTime " +
+            "AND cr.updatedAt >= :startDateTime " +
+            "AND cr.updatedAt < :endDateTime " +
             "AND (:type IS NULL OR cr.content.id.type = :type) " +
             "GROUP BY cr.content.id.id, cr.content.id.type, cr.content.releaseDate " +
             "ORDER BY COUNT(cr.content.id.id) DESC, cr.content.releaseDate DESC")

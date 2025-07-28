@@ -21,7 +21,6 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.data.RepositoryItemReader;
 import org.springframework.batch.item.database.JpaItemWriter;
-import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -109,21 +108,19 @@ public class DailyPopularContentJobConfig {
         };
     }
 
-//    @Bean
     public RepositoryItemReader<PopularContentStats> createReader(String type) {
         RepositoryItemReader<PopularContentStats> reader = new RepositoryItemReader<>();
         reader.setRepository(contentReactionRepository);
         reader.setMethodName("findPopularContentStatsByType");
 
-        LocalDate yesterday = LocalDate.now().minusDays(2);
+        LocalDate yesterday = LocalDate.now().minusDays(3);
         LocalDateTime startOfDay = yesterday.atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        LocalDateTime endOfDay = startOfDay.plusDays(3);
 
         List<Object> arguments = Arrays.asList(
                 startOfDay,
                 endOfDay,
                 type
-                // Pageable은 RepositoryItemReader가 자동으로 추가
         );
         reader.setArguments(arguments);
 
@@ -137,8 +134,7 @@ public class DailyPopularContentJobConfig {
 
         return reader;
     }
-//
-//    @Bean
+
     public ItemProcessor<PopularContentStats, DailyPopularContent> popularContentProcessor(BatchContentType type) {
         return new ItemProcessor<>() {
             private int rank = 1;
@@ -146,11 +142,9 @@ public class DailyPopularContentJobConfig {
 
             @Override
             public DailyPopularContent process(PopularContentStats stats) {
-                // 상위 20개만 처리
-                if (rank > 10) {
+                if (rank > 5) {
                     return null;
                 }
-
                 return DailyPopularContent.builder()
                         .content(stats.getContent())
                         .likeCount(stats.getLikeCount())
