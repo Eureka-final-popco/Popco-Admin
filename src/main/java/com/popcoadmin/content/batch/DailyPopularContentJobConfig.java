@@ -83,7 +83,7 @@ public class DailyPopularContentJobConfig {
 
                 try {
                     tx.begin();
-                    LocalDate yesterday = LocalDate.now().minusDays(1);
+                    LocalDate yesterday = LocalDate.now().minusDays(2);
 
                     Query query = em.createQuery(
                             "DELETE FROM DailyPopularContent p WHERE p.rankedDate = :targetDate"
@@ -113,8 +113,8 @@ public class DailyPopularContentJobConfig {
         reader.setRepository(contentReactionRepository);
         reader.setMethodName("findPopularContentStatsByType");
 
-        LocalDate yesterday = LocalDate.now().minusDays(3);
-        LocalDateTime startOfDay = yesterday.atStartOfDay();
+        LocalDate settingDay = LocalDate.now().minusDays(3);
+        LocalDateTime startOfDay = settingDay.atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(3);
 
         List<Object> arguments = Arrays.asList(
