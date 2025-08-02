@@ -117,7 +117,7 @@ public class TmdbMovieApiClient {
                 .retrieve()
                 .bodyToMono(ContentPageResponse.class)
                 .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
-                .doOnError(error -> log.error("Error discovering Korean movies: {}", error.getMessage()));
+                .doOnError(error -> log.error("Error discovering Japan movies: {}", error.getMessage()));
     }
 
     public Mono<ContentPageResponse> discoverPopularMovies(int page) {
@@ -138,7 +138,7 @@ public class TmdbMovieApiClient {
                 .retrieve()
                 .bodyToMono(ContentPageResponse.class)
                 .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
-                .doOnError(error -> log.error("Error discovering Korean movies: {}", error.getMessage()));
+                .doOnError(error -> log.error("Error discovering Popular movies: {}", error.getMessage()));
     }
 
 

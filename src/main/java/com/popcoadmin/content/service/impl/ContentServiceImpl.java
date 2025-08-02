@@ -81,12 +81,12 @@ public class ContentServiceImpl implements ContentService {
             // 배치로 처리
             int batchSize = 20;
 
-//            // 영화 상세 정보 (한 번의 호출로 모든 정보)
-//            for (int i = 0; i < allMovieIds.size(); i += batchSize) {
-//                List<Long> batch = allMovieIds.subList(i, Math.min(i + batchSize, allMovieIds.size()));
-//                log.info("Processing movie batch {}/{}", (i/batchSize) + 1, (allMovieIds.size()/batchSize) + 1);
-//                syncMovieFullDetails(batch);
-//            }
+            // 영화 상세 정보 (한 번의 호출로 모든 정보)
+            for (int i = 0; i < allMovieIds.size(); i += batchSize) {
+                List<Long> batch = allMovieIds.subList(i, Math.min(i + batchSize, allMovieIds.size()));
+                log.info("Processing movie batch {}/{}", (i/batchSize) + 1, (allMovieIds.size()/batchSize) + 1);
+                syncMovieFullDetails(batch);
+            }
 
             // TV 상세 정보 (한 번의 호출로 모든 정보)
             for (int i = 0; i < allTvIds.size(); i += batchSize) {
@@ -176,38 +176,38 @@ public class ContentServiceImpl implements ContentService {
 
     @Transactional
     public void discoverKoreanMovies(int maxPages) {
-        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
-        syncMovies(tmdbMovieApiClient::discoverKoreanMovies, maxPages, "now playing");
+        log.info("Starting korea movies synchronization for {} pages...", maxPages);
+        syncMovies(tmdbMovieApiClient::discoverKoreanMovies, maxPages, "korea movies");
     }
 
     @Transactional
     public void discoverKoreanTVSeries(int maxPages) {
-        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
-        syncTvs(tmdbTvApiClient::discoverKoreanTVSeries, maxPages, "now playing");
+        log.info("Starting korea tv series synchronization for {} pages...", maxPages);
+        syncTvs(tmdbTvApiClient::discoverKoreanTVSeries, maxPages, "korea tv series");
     }
 
     @Transactional
     public void discoverJapanMovies(int maxPages) {
-        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
-        syncMovies(tmdbMovieApiClient::discoverJapanMovies, maxPages, "now playing");
+        log.info("Starting japan movies synchronization for {} pages...", maxPages);
+        syncMovies(tmdbMovieApiClient::discoverJapanMovies, maxPages, "japan movies");
     }
 
     @Transactional
     public void discoverJapanTVSeries(int maxPages) {
-        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
-        syncTvs(tmdbTvApiClient::discoverJapanTVSeries, maxPages, "now playing");
+        log.info("Starting japan tv series synchronization for {} pages...", maxPages);
+        syncTvs(tmdbTvApiClient::discoverJapanTVSeries, maxPages, "japan tv series");
     }
 
     @Transactional
     public void discoverPopularMovies(int maxPages) {
-        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
-        syncMovies(tmdbMovieApiClient::discoverPopularMovies, maxPages, "now playing");
+        log.info("Starting popular movies synchronization for {} pages...", maxPages);
+        syncMovies(tmdbMovieApiClient::discoverPopularMovies, maxPages, "popular movies");
     }
 
     @Transactional
     public void discoverPopularTVSeries(int maxPages) {
-        log.info("Starting now playing movies synchronization for {} pages...", maxPages);
-        syncTvs(tmdbTvApiClient::discoverPopularTVSeries, maxPages, "now playing");
+        log.info("Starting popular tv series synchronization for {} pages...", maxPages);
+        syncTvs(tmdbTvApiClient::discoverPopularTVSeries, maxPages, "popular tv series");
     }
 
     //    @Transactional

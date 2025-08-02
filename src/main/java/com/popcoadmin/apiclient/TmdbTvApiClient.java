@@ -154,7 +154,7 @@ public class TmdbTvApiClient {
                 .retrieve()
                 .bodyToMono(ContentPageResponse.class)
                 .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
-                .doOnError(error -> log.error("Error discovering Korean TV series: {}", error.getMessage()));
+                .doOnError(error -> log.error("Error discovering Japan TV series: {}", error.getMessage()));
     }
 
     public Mono<ContentPageResponse> discoverPopularTVSeries(int page) {
@@ -173,6 +173,6 @@ public class TmdbTvApiClient {
                 .retrieve()
                 .bodyToMono(ContentPageResponse.class)
                 .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
-                .doOnError(error -> log.error("Error discovering Korean TV series: {}", error.getMessage()));
+                .doOnError(error -> log.error("Error discovering Popular TV series: {}", error.getMessage()));
     }
 }
