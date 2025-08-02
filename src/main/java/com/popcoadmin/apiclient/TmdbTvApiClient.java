@@ -116,4 +116,63 @@ public class TmdbTvApiClient {
                 .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
                 .doOnError(error -> log.error("Error fetching full tv detail for {}: {}", tvId, error.getMessage()));
     }
+
+    public Mono<ContentPageResponse> discoverKoreanTVSeries(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/discover/tv")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "ko-KR")
+                        .queryParam("sort_by", "first_air_date.desc")
+                        .queryParam("air_date.gte", "1998-01-01")
+                        .queryParam("air_date.lte", "2025-08-15")
+                        .queryParam("with_original_language", "ko")
+                        .queryParam("vote_average.gte", "6")
+                        .queryParam("vote_count.gte", "3")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(ContentPageResponse.class)
+                .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
+                .doOnError(error -> log.error("Error discovering Korean TV series: {}", error.getMessage()));
+    }
+
+    public Mono<ContentPageResponse> discoverJapanTVSeries(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/discover/tv")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "ko-KR")
+                        .queryParam("sort_by", "first_air_date.desc")
+                        .queryParam("air_date.gte", "1998-01-01")
+                        .queryParam("air_date.lte", "2025-08-15")
+                        .queryParam("with_original_language", "ja")
+                        .queryParam("vote_average.gte", "6")
+                        .queryParam("vote_count.gte", "300")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(ContentPageResponse.class)
+                .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
+                .doOnError(error -> log.error("Error discovering Korean TV series: {}", error.getMessage()));
+    }
+
+    public Mono<ContentPageResponse> discoverPopularTVSeries(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/discover/tv")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "ko-KR")
+                        .queryParam("sort_by", "first_air_date.desc")
+                        .queryParam("air_date.gte", "1998-01-01")
+                        .queryParam("air_date.lte", "2025-08-15")
+                        .queryParam("vote_average.gte", "6")
+                        .queryParam("vote_count.gte", "350")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(ContentPageResponse.class)
+                .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
+                .doOnError(error -> log.error("Error discovering Korean TV series: {}", error.getMessage()));
+    }
 }
