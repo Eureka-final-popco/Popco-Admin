@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -39,4 +40,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("contentId") Long contentId,
             @Param("contentType") String contentType,
             @Param("beforeDate") LocalDateTime beforeDate);
+
+    Long countByContent(Content content);
+    @Query("SELECT AVG(r.score) FROM Review r WHERE r.content.id.id = :contentId AND r.content.id.type = :type")
+    BigDecimal findAverageScoreByContentIdAndType(@Param("contentId") Long contentId, @Param("type") String type);
+
 }

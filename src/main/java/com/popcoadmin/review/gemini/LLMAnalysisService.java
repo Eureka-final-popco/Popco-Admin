@@ -110,7 +110,7 @@ public class LLMAnalysisService {
         prompt.append("- 기존 평점 분포:\n");
         reviewSummaryDto.getRatingDistribution().stream()
                 .sorted(Comparator.comparing(ReviewRatingDistributionDto::getRating, Comparator.reverseOrder())) // 5점부터 출력
-                .forEach(rating -> prompt.append(String.format("  %f점: %d개\n",
+                .forEach(rating -> prompt.append(String.format("  %d점: %d개\n",
                         rating.getRating(), rating.getCount())));
 
         prompt.append("\n이후, 새롭게 추가된 리뷰는 다음과 같아:\n\n");

@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -92,19 +93,15 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
                     List<ReviewRatingDistributionDto> ratingHistogram = reviewRepository.findRatingDistributionBeforeDate(
                             content.getId().getId(), content.getId().getType(), start);
 
-                    log.info("평점 분포 조회 결과: {}", ratingHistogram.stream()
-                            .map(r -> r.getRating() + "점:" + r.getCount() + "개")
-                            .collect(Collectors.joining(", ")));
-
                     // 3. LLM 분석에 필요한 데이터 구성
                     ReviewSummaryDto reviewSummary = ReviewSummaryDto.of(existingSummary.get(), ratingHistogram);
                     LLMAnalysisRequest analysisRequest = LLMAnalysisRequest.ofUpdate(recentReviews, content, genres, reviewSummary, SummaryStrategyType.UPDATE_PARTIAL);
 
-//                    // 4. LLM 분석 요청
-//                    LLMAnalysisResult analysisResult = llmService.analyzeReviews(analysisRequest);
-//
-//                    // 5. 요약 갱신
-//                    updateExistingSummary(content, existingSummary.get(), analysisResult);
+                    // 4. LLM 분석 요청
+                    LLMAnalysisResult analysisResult = llmService.analyzeReviews(analysisRequest);
+
+                    // 5. 요약 갱신
+                    updateExistingSummary(content, existingSummary.get(), analysisResult);
                 }
             } else {
                 // 리뷰 목록 조회
@@ -124,8 +121,11 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
     }
 
     private void updateExistingSummary(Content content, ReviewSummary summary, LLMAnalysisResult analysisResult) {
+        Long reviewCount = reviewRepository.countByContent(content);
+        BigDecimal reviewAvg = reviewRepository.findAverageScoreByContentIdAndType(content.getId().getId(), content.getId().getType());
+
         summary.updateSummary(
-                analysisResult.getSummary(), analysisResult.getEvaluation(), content.getRatingAverage(), content.getRatingCount());
+                analysisResult.getSummary(), analysisResult.getEvaluation(), reviewAvg, reviewCount);
 
         reviewSummaryRepository.save(summary);
         log.info("콘텐츠 {}({}) 요약 업데이트 완료",
@@ -135,8 +135,11 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
     }
 
     private void createNewSummary(Content content, LLMAnalysisResult analysisResult) {
+        Long reviewCount = reviewRepository.countByContent(content);
+        BigDecimal reviewAvg = reviewRepository.findAverageScoreByContentIdAndType(content.getId().getId(), content.getId().getType());
+
         ReviewSummary newSummary =
-                ReviewSummary.of(content, analysisResult.getSummary(), analysisResult.getEvaluation(), content.getRatingAverage(), content.getRatingCount());
+                ReviewSummary.of(content, analysisResult.getSummary(), analysisResult.getEvaluation(), reviewAvg, reviewCount);
 
         reviewSummaryRepository.save(newSummary);
         log.info("콘텐츠 {}({}) 요약 생성 완료",
