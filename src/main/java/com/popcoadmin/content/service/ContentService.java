@@ -10,15 +10,27 @@ public interface ContentService {
 
     void syncAllProviders();
 
-    void syncNowPlayingMovies(int maxPages);
+    void discoverKoreanMovies(int maxPages);
 
-    void syncUpcomingMovies(int maxPages);
+    void discoverKoreanTVSeries(int maxPages);
 
-    void syncOnTheAirTvs(int maxPages);
+    void discoverJapanMovies(int maxPages);
 
-    void syncPopular(int maxPages);
+    void discoverJapanTVSeries(int maxPages);
 
-    void syncTopRated(int maxPages);
+    void discoverPopularMovies(int maxPages);
+
+    void discoverPopularTVSeries(int maxPages);
+
+//    void syncNowPlayingMovies(int maxPages);
+//
+//    void syncUpcomingMovies(int maxPages);
+//
+//    void syncOnTheAirTvs(int maxPages);
+//
+//    void syncPopular(int maxPages);
+//
+//    void syncTopRated(int maxPages);
 
     void syncMovieFullDetails(List<Long> movieIds);
 

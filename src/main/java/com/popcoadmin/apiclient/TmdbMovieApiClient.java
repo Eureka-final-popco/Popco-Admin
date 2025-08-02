@@ -75,6 +75,73 @@ public class TmdbMovieApiClient {
                 .doOnError(error -> log.error("Error fetching popular movies page {}: {}", page, error.getMessage()));
     }
 
+    public Mono<ContentPageResponse> discoverKoreanMovies(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/discover/movie")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "ko-KR")
+                        .queryParam("region", "KR")
+                        .queryParam("include_adult", false)
+                        .queryParam("sort_by", "primary_release_date.desc")
+                        .queryParam("primary_release_date.gte", "1998-01-01")
+                        .queryParam("primary_release_date.lte", "2025-08-15")
+                        .queryParam("with_original_language", "ko")
+                        .queryParam("vote_average.gte", "6")
+                        .queryParam("vote_count.gte", "12")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(ContentPageResponse.class)
+                .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
+                .doOnError(error -> log.error("Error discovering Korean movies: {}", error.getMessage()));
+    }
+
+
+    public Mono<ContentPageResponse> discoverJapanMovies(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/discover/movie")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "ko-KR")
+                        .queryParam("region", "KR")
+                        .queryParam("include_adult", false)
+                        .queryParam("sort_by", "primary_release_date.desc")
+                        .queryParam("primary_release_date.gte", "1998-01-01")
+                        .queryParam("primary_release_date.lte", "2025-08-15")
+                        .queryParam("with_original_language", "ja")
+                        .queryParam("vote_average.gte", "7")
+                        .queryParam("vote_count.gte", "350")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(ContentPageResponse.class)
+                .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
+                .doOnError(error -> log.error("Error discovering Japan movies: {}", error.getMessage()));
+    }
+
+    public Mono<ContentPageResponse> discoverPopularMovies(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/discover/movie")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "ko-KR")
+                        .queryParam("region", "KR")
+                        .queryParam("include_adult", false)
+                        .queryParam("sort_by", "primary_release_date.desc")
+                        .queryParam("primary_release_date.gte", "1998-01-01")
+                        .queryParam("primary_release_date.lte", "2025-08-15")
+                        .queryParam("vote_average.gte", "7")
+                        .queryParam("vote_count.gte", "350")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(ContentPageResponse.class)
+                .retryWhen(Retry.backoff(maxRetries, Duration.ofMillis(retryDelay)))
+                .doOnError(error -> log.error("Error discovering Popular movies: {}", error.getMessage()));
+    }
+
+
     public Mono<ContentPageResponse> getPopularMovies(int page) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
