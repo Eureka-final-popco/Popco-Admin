@@ -1,7 +1,6 @@
 package com.popcoadmin.review.gemini.dto.enums;
 
 import lombok.Getter;
-import lombok.ToString;
 
 @Getter
 public enum SummaryStrategyType {

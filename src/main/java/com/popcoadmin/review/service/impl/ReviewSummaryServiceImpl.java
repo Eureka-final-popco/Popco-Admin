@@ -5,10 +5,14 @@ import com.popcoadmin.content.entity.ContentGenre;
 import com.popcoadmin.content.entity.key.ContentId;
 import com.popcoadmin.content.repository.ContentGenreRepository;
 import com.popcoadmin.content.repository.ContentRepository;
+import com.popcoadmin.review.dto.response.ReviewRatingDistributionDto;
 import com.popcoadmin.review.entity.ReviewSummary;
 import com.popcoadmin.review.entity.Review;
 import com.popcoadmin.review.gemini.LLMAnalysisService;
+import com.popcoadmin.review.gemini.dto.LLMAnalysisRequest;
 import com.popcoadmin.review.gemini.dto.LLMAnalysisResult;
+import com.popcoadmin.review.gemini.dto.ReviewSummaryDto;
+import com.popcoadmin.review.gemini.dto.enums.SummaryStrategyType;
 import com.popcoadmin.review.repository.ReviewRepository;
 import com.popcoadmin.review.repository.ReviewSummaryRepository;
 import com.popcoadmin.review.service.ReviewSummaryService;
@@ -16,29 +20,31 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ReviewSummaryServiceImpl implements ReviewSummaryService {
     private final ReviewRepository reviewRepository;
-    private final ReviewSummaryRepository summaryRepository;
     private final ContentRepository contentRepository;
     private final LLMAnalysisService llmService;
     private final ContentGenreRepository contentGenreRepository;
+    private final ReviewSummaryRepository reviewSummaryRepository;
 
     public void processReviewSummaries() {
         log.info("리뷰 요약 작업 시작");
 
-        LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusDays(3);
 
-        // 3일 전 이후에 추가된 리뷰의 content 정보 추출 (복합키 사용)
-        List<ContentId> contentIds = reviewRepository.findDistinctContentIdsCreatedAfter(threeDaysAgo);
+        List<ContentId> recentContentIds = reviewRepository.findDistinctContentIdsBetween(start, end);
 
-        for (ContentId contentId : contentIds) {
+        for (ContentId contentId : recentContentIds) {
             try {
                 processContentReviewSummary(contentId);
             } catch (Exception e) {
@@ -53,9 +59,6 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
         log.info("리뷰 요약 작업 완료");
     }
 
-    /**
-     * 특정 콘텐츠의 리뷰 요약 처리
-     */
     private void processContentReviewSummary(ContentId contentId) {
 
         Optional<Content> contentOpt = contentRepository.findById(contentId);
@@ -69,22 +72,46 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
         Integer reviewCount = reviewRepository.countByContentId(contentId);
 
         if (reviewCount >= 5) {
-            log.info("콘텐츠 {}({})의 리뷰 {}개 - 요약 생성 진행",
+            log.info("콘텐츠 {}({})의 총 리뷰 {}개 - 요약 생성 진행",
                     contentId.getId(), contentId.getType(), reviewCount);
 
-            // 리뷰 목록 조회
-            List<Review> reviews = reviewRepository.findByContentIdAndType(
-                    contentId.getId(), contentId.getType());
-
-            // LLM을 통한 리뷰 분석
-            LLMAnalysisResult analysisResult = llmService.analyzeReviews(reviews, content, genres);
-
-            // 기존 요약이 있으면 업데이트, 없으면 생성
-            Optional<ReviewSummary> existingSummary = summaryRepository.findByContent(content);
+            Optional<ReviewSummary> existingSummary = reviewSummaryRepository.findByContent(content);
 
             if (existingSummary.isPresent()) {
-                updateExistingSummary(existingSummary.get(), analysisResult);
+                Long lastSummaryCount = existingSummary.get().getReviewCount();
+
+                if (reviewCount > lastSummaryCount && (reviewCount / 5) > (lastSummaryCount / 5)) {
+                    log.info("기존의 리뷰{}, 추가된 리뷰{} - 요약 생성 진행",
+                            lastSummaryCount, reviewCount - lastSummaryCount);
+
+                    LocalDateTime end = LocalDateTime.now();
+                    LocalDateTime start = end.minusDays(3);
+
+                    List<Review> recentReviews = reviewRepository.findByContentAndUpdatedAtBetween(content, start, end);
+
+                    // 2. 리뷰 평점 분포 조회 (JPA에서 GROUP BY로 구현했다고 가정)
+                    List<ReviewRatingDistributionDto> ratingHistogram = reviewRepository.findRatingDistributionBeforeDate(
+                            content.getId().getId(), content.getId().getType(), start);
+
+                    // 3. LLM 분석에 필요한 데이터 구성
+                    ReviewSummaryDto reviewSummary = ReviewSummaryDto.of(existingSummary.get(), ratingHistogram);
+                    LLMAnalysisRequest analysisRequest = LLMAnalysisRequest.ofUpdate(recentReviews, content, genres, reviewSummary, SummaryStrategyType.UPDATE_PARTIAL);
+
+                    // 4. LLM 분석 요청
+                    LLMAnalysisResult analysisResult = llmService.analyzeReviews(analysisRequest);
+
+                    // 5. 요약 갱신
+                    updateExistingSummary(content, existingSummary.get(), analysisResult);
+                }
             } else {
+                // 리뷰 목록 조회
+                List<Review> reviews = reviewRepository.findByContentIdAndType(
+                        contentId.getId(), contentId.getType());
+
+                LLMAnalysisRequest analysisRequest = LLMAnalysisRequest.ofInitial(content, genres, reviews, SummaryStrategyType.INITIAL);
+
+                // LLM을 통한 리뷰 분석
+                LLMAnalysisResult analysisResult = llmService.analyzeReviews(analysisRequest);
                 createNewSummary(content, analysisResult);
             }
         } else {
@@ -93,28 +120,28 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
         }
     }
 
-    /**
-     * 기존 요약 업데이트
-     */
-    private void updateExistingSummary(ReviewSummary summary, LLMAnalysisResult analysisResult) {
-        summary.updateSummary(
-                analysisResult.getSummary(), analysisResult.getEvaluation());
+    private void updateExistingSummary(Content content, ReviewSummary summary, LLMAnalysisResult analysisResult) {
+        Long reviewCount = reviewRepository.countByContent(content);
+        BigDecimal reviewAvg = reviewRepository.findAverageScoreByContentIdAndType(content.getId().getId(), content.getId().getType());
 
-        summaryRepository.save(summary);
+        summary.updateSummary(
+                analysisResult.getSummary(), analysisResult.getEvaluation(), reviewAvg, reviewCount);
+
+        reviewSummaryRepository.save(summary);
         log.info("콘텐츠 {}({}) 요약 업데이트 완료",
                 summary.getContent().getId().getId(),
                 summary.getContent().getId().getType()
         );
     }
 
-    /**
-     * 새 요약 생성
-     */
     private void createNewSummary(Content content, LLMAnalysisResult analysisResult) {
-        ReviewSummary newSummary =
-                ReviewSummary.of(content, analysisResult.getSummary(), analysisResult.getEvaluation());
+        Long reviewCount = reviewRepository.countByContent(content);
+        BigDecimal reviewAvg = reviewRepository.findAverageScoreByContentIdAndType(content.getId().getId(), content.getId().getType());
 
-        summaryRepository.save(newSummary);
+        ReviewSummary newSummary =
+                ReviewSummary.of(content, analysisResult.getSummary(), analysisResult.getEvaluation(), reviewAvg, reviewCount);
+
+        reviewSummaryRepository.save(newSummary);
         log.info("콘텐츠 {}({}) 요약 생성 완료",
                 content.getId().getId(), content.getId().getType());
     }
@@ -125,14 +152,14 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
     private void removeInsufficientReviewSummaries() {
         log.info("리뷰 부족 콘텐츠 요약 제거 작업 시작");
 
-        List<ReviewSummary> allSummaries = summaryRepository.findAll();
+        List<ReviewSummary> allSummaries = reviewSummaryRepository.findAll();
 
         for (ReviewSummary summary : allSummaries) {
             ContentId contentId = summary.getContent().getId();
             Integer currentReviewCount = reviewRepository.countByContentId(contentId);
 
             if (currentReviewCount <= 5) {
-                summaryRepository.delete(summary);
+                reviewSummaryRepository.delete(summary);
                 log.info("콘텐츠 {}({}) 요약 제거 - 현재 리뷰 {}개",
                         contentId.getId(), contentId.getType(), currentReviewCount);
             }
