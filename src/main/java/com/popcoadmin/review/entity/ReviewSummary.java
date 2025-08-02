@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,23 +40,34 @@ public class ReviewSummary {
     @Column(name = "evaluation_type")
     private String evaluationType;
 
+    @Column(name = "review_avg")
+    private BigDecimal reviewAvg;
+
+    @Column(name = "review_count")
+    private Long reviewCount;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    public static ReviewSummary of(Content content, String summaryText, String evaluationType) {
+    public static ReviewSummary of(
+            Content content, String summaryText, String evaluationType, BigDecimal reviewAvg, Long reviewCount) {
         return ReviewSummary.builder()
                 .content(content)
                 .summaryText(summaryText)
                 .evaluationType(evaluationType)
+                .reviewAvg(reviewAvg)
+                .reviewCount(reviewCount)
                 .build();
     }
 
-    public void updateSummary(String summaryText,String evaluationType) {
+    public void updateSummary(String summaryText,String evaluationType, BigDecimal reviewAvg, Long reviewCount) {
         this.summaryText = summaryText;
         this.evaluationType = evaluationType;
+        this.reviewAvg = reviewAvg;
+        this.reviewCount = reviewCount;
     }
 
 }
