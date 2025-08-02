@@ -32,8 +32,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT new com.popcoadmin.review.dto.response.ReviewRatingDistributionDto(CAST(ROUND(r.score) AS int), COUNT(r)) " +
             "FROM Review r WHERE r.content.id.id = :contentId AND r.content.id.type = :contentType " +
+            "AND r.updatedAt < :beforeDate " +
             "GROUP BY CAST(ROUND(r.score) AS int)" +
             "ORDER BY CAST(ROUND(r.score) AS int) DESC")
-    List<ReviewRatingDistributionDto> findRatingDistribution(@Param("contentId") Long contentId,
-                                                             @Param("contentType") String contentType);
+    List<ReviewRatingDistributionDto> findRatingDistributionBeforeDate(
+            @Param("contentId") Long contentId,
+            @Param("contentType") String contentType,
+            @Param("beforeDate") LocalDateTime beforeDate);
 }

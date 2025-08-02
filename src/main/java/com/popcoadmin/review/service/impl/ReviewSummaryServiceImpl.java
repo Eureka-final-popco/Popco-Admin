@@ -77,7 +77,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
             Optional<ReviewSummary> existingSummary = reviewSummaryRepository.findByContent(content);
 
             if (existingSummary.isPresent()) {
-                Integer lastSummaryCount = reviewSummaryRepository.countByContentId(contentId);
+                Long lastSummaryCount = existingSummary.get().getReviewCount();
 
                 if (reviewCount > lastSummaryCount && (reviewCount / 5) > (lastSummaryCount / 5)) {
                     log.info("기존의 리뷰{}, 추가된 리뷰{} - 요약 생성 진행",
@@ -89,8 +89,8 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
                     List<Review> recentReviews = reviewRepository.findByContentAndUpdatedAtBetween(content, start, end);
 
                     // 2. 리뷰 평점 분포 조회 (JPA에서 GROUP BY로 구현했다고 가정)
-                    List<ReviewRatingDistributionDto> ratingHistogram = reviewRepository.findRatingDistribution(
-                            content.getId().getId(), content.getId().getType());
+                    List<ReviewRatingDistributionDto> ratingHistogram = reviewRepository.findRatingDistributionBeforeDate(
+                            content.getId().getId(), content.getId().getType(), start);
 
                     log.info("평점 분포 조회 결과: {}", ratingHistogram.stream()
                             .map(r -> r.getRating() + "점:" + r.getCount() + "개")
