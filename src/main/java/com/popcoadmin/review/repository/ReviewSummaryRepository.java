@@ -11,4 +11,5 @@ import java.util.Optional;
 @Repository
 public interface ReviewSummaryRepository extends JpaRepository<ReviewSummary, Long> {
     Optional<ReviewSummary> findByContent(Content content);
+    Integer countByContentId(ContentId contentId);
 }

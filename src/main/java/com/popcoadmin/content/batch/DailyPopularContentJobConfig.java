@@ -113,9 +113,9 @@ public class DailyPopularContentJobConfig {
         reader.setRepository(contentReactionRepository);
         reader.setMethodName("findPopularContentStatsByType");
 
-        LocalDate settingDay = LocalDate.now().minusDays(3);
+        LocalDate settingDay = LocalDate.now().minusDays(7);
         LocalDateTime startOfDay = settingDay.atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(3);
+        LocalDateTime endOfDay = startOfDay.plusDays(7);
 
         List<Object> arguments = Arrays.asList(
                 startOfDay,
