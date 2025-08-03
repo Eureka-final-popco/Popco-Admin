@@ -2,8 +2,11 @@ package com.popcoadmin.quiz.controller;
 
 import com.popcoadmin.common.response.ApiResponse;
 import com.popcoadmin.quiz.dto.request.QuizRequestDto;
+import com.popcoadmin.quiz.dto.request.TestNotificationRequestDto;
 import com.popcoadmin.quiz.dto.response.QuizResponseDto;
 import com.popcoadmin.quiz.service.QuizService;
+import com.popcoadmin.quiz.service.impl.NotificationServiceImpl;
+import com.popcoadmin.quiz.service.impl.QuizNotificationServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.List;
 public class QuizController {
 
     private final QuizService quizService;
+    private final QuizNotificationServiceImpl quizNotificationService;
 
     @Operation(summary = "새 퀴즈 생성", description = "새로운 퀴즈를 생성합니다.")
     @PostMapping
@@ -55,5 +59,19 @@ public class QuizController {
     public ResponseEntity<ApiResponse<Void>> deleteQuiz(@PathVariable Long quizId) {
         quizService.deleteQuiz(quizId);
         return ResponseEntity.ok(ApiResponse.success("퀴즈 삭제 성공", null));
+    }
+
+    @Operation(summary = "알림 발송 테스트 api", description = "개발 및 디버깅 용도의 api 입니다.")
+    @PostMapping("/test-notification")
+    public ResponseEntity<ApiResponse<String>> sendTestNotification(@RequestBody TestNotificationRequestDto request) {
+        quizNotificationService.sendTestNotification(request.getTitle(), request.getMessage());
+        return ResponseEntity.ok(ApiResponse.success("테스트 알림 발송 성공",null));
+    }
+
+    @Operation(summary = "특정 퀴즈 채널 알림 발송 API", description = "페이지 로드 시, GET /api/client/quizzes/latest 로 발생한 가장 최근 퀴즈 id 를 받아와 넘겨주면 임박한 퀴즈 알림 채널 구독 가능")
+    @PostMapping("/{quizId}/send-notification")
+    public ResponseEntity<ApiResponse<Void>> sendQuizNotification(@PathVariable Long quizId) {
+        quizNotificationService.sendQuizNotification(quizId);
+        return ResponseEntity.ok(ApiResponse.success("퀴즈 알림 발송 성공", null));
     }
 }
