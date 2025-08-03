@@ -39,7 +39,7 @@ public class NotificationScheduler {
                 }
 
                 String message;
-                if (minutesUntilStart <= 1) {
+                if (minutesUntilStart <= 10) {
                     message = String.format("'%s' 퀴즈가 곧 시작됩니다! 지금 바로 참여하세요!", quiz.getName());
                 } else {
                     message = String.format("'%s' 퀴즈가 %d분 후에 시작됩니다! 미리 접속해보세요!",
