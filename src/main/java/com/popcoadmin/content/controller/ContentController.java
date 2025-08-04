@@ -10,11 +10,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/contents/batch")
+@RequestMapping("/contents")
 @Tag(name = "Content API", description = "콘텐츠 관련 CRUD")
 public class ContentController {
     private final ContentService contentService;
 
+    // git 에 추가 됩니다.
     @Operation(summary = "영화 데이터 가져오기", description = "영화 데이터를 가져옵니다.")
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<Void>> syncAll(int pagesPerCategory, boolean includeDetails) {
