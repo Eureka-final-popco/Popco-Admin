@@ -9,11 +9,14 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.job.flow.FlowExecutionStatus;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -37,6 +40,7 @@ import java.util.Map;
 @EnableBatchProcessing
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class DailyPopularContentJobConfig {
 
     public static final String JOB_NAME = "popularContentJob";
@@ -45,15 +49,23 @@ public class DailyPopularContentJobConfig {
     private final PlatformTransactionManager platformTransactionManager;
     private final EntityManagerFactory entityManagerFactory;
     private final ContentReactionRepository contentReactionRepository;
+    private final BatchFailureLoggingListener batchFailureLoggingListener;
 
     @Bean
     public Job popularContentJob() {
+        Step stepAll = buildPopularContentStep(BatchContentType.ALL);
+        Step stepMovie = buildPopularContentStep(BatchContentType.MOVIE);
+        Step stepTv = buildPopularContentStep(BatchContentType.TV);
+
         return new JobBuilder(JOB_NAME, jobRepository)
-                .start(clearPreviousDataStep()) // 기존 데이터 제거
-                .next(buildPopularContentStep(BatchContentType.ALL))
-                .next(buildPopularContentStep(BatchContentType.MOVIE))
-                .next(buildPopularContentStep(BatchContentType.TV))
-                .build();
+                .start(clearPreviousDataStep())
+                .next(stepAll)
+                .on("*").to(stepMovie)
+                .from(stepMovie)
+                .on("*").to(stepTv)
+                .from(stepTv)
+                .on("*").end()
+                .build().build();
     }
 
     // 이전 데이터 삭제 스텝
@@ -61,6 +73,34 @@ public class DailyPopularContentJobConfig {
     public Step clearPreviousDataStep() {
         return new StepBuilder("clearPreviousDataStep", jobRepository)
                 .tasklet(clearPreviousDataTasklet(), platformTransactionManager)
+                .listener(batchFailureLoggingListener)
+                .build();
+    }
+
+    private JobExecutionDecider deciderStep() {
+        return (jobExecution, stepExecution) -> {
+            String type = jobExecution.getJobParameters().getString("type");
+            if (type == null) {
+                return new FlowExecutionStatus("FAILED");
+            }
+            if (!(type.equalsIgnoreCase("ALL") || type.equalsIgnoreCase("MOVIE") || type.equalsIgnoreCase("TV"))) {
+                return new FlowExecutionStatus("FAILED");
+            }
+            return new FlowExecutionStatus(type.toUpperCase());
+        };
+    }
+
+    @Bean
+    public Job retrySingleStepJob() {
+        JobExecutionDecider decider = deciderStep(); // 직접 생성
+
+        return new JobBuilder("retrySingleStepJob", jobRepository)
+                .start(decider)
+                .from(decider).on("ALL").to(buildPopularContentStep(BatchContentType.ALL))
+                .from(decider).on("MOVIE").to(buildPopularContentStep(BatchContentType.MOVIE))
+                .from(decider).on("TV").to(buildPopularContentStep(BatchContentType.TV))
+                .from(decider).on("FAILED").fail()
+                .end()
                 .build();
     }
 
@@ -70,6 +110,7 @@ public class DailyPopularContentJobConfig {
                 .reader(createReader(type.getValue()))
                 .processor(popularContentProcessor(type))
                 .writer(popularContentWriter())
+                .listener(batchFailureLoggingListener)
                 .build();
     }
 
