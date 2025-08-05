@@ -61,7 +61,7 @@ public class QuizController {
         return ResponseEntity.ok(ApiResponse.success("퀴즈 삭제 성공", null));
     }
 
-    @Operation(summary = "알림 발송 테스트 api", description = "개발 및 디버깅 용도의 api 입니다.")
+    @Operation(summary = "알림 발송 테스트 api", description = "#개발 및 디버깅 용도의 api 입니다.")
     @PostMapping("/test-notification")
     public ResponseEntity<ApiResponse<String>> sendTestNotification(@RequestBody TestNotificationRequestDto request) {
         quizNotificationService.sendTestNotification(request.getTitle(), request.getMessage());
