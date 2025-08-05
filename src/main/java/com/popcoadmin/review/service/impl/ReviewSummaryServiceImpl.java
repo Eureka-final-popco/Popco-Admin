@@ -40,7 +40,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
         log.info("리뷰 요약 작업 시작");
 
         LocalDateTime end = LocalDateTime.now();
-        LocalDateTime start = end.minusDays(3);
+        LocalDateTime start = end.minusDays(10);
 
         List<ContentId> recentContentIds = reviewRepository.findDistinctContentIdsBetween(start, end);
 
