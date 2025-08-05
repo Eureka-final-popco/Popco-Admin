@@ -17,4 +17,12 @@ public class WebClientConfig {
                 .baseUrl(baseUrl)
                 .build();
     }
+
+    @Bean
+    public WebClient slackWebClient() {
+        return WebClient.builder()
+                .baseUrl("https://slack.com/api/")
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
 }
