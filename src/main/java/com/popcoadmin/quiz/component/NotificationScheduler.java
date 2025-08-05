@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Component
@@ -24,7 +25,8 @@ public class NotificationScheduler {
     @Scheduled(fixedRate = 60000) // 1분
     @Transactional(readOnly = true)
     public void sendUpcomingQuizNotifications() {
-        LocalDateTime now = LocalDateTime.now();
+        ZoneId seoulZoneId = ZoneId.of("Asia/Seoul");
+        LocalDateTime now = LocalDateTime.now(seoulZoneId);
         LocalDateTime tenMinutesFromNow = now.plusMinutes(10);
 
         List<Quiz> upcomingQuizzes = quizRepository.findQuizzesStartingWithin(now, tenMinutesFromNow);

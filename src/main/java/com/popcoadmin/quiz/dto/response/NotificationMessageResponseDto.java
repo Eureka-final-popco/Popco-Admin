@@ -26,6 +26,8 @@ public class NotificationMessageResponseDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime sentTime;
 
+    private Long remainMin;
+
     private String targetAudience;
 
 }

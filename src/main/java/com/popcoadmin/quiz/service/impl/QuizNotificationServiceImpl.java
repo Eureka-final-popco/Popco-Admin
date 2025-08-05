@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.popcoadmin.quiz.repository.QuizRepository;
@@ -42,6 +43,7 @@ public class QuizNotificationServiceImpl {
         Quiz quiz = getQuizById(quizId);
 
         String message = String.format("'%s' 퀴즈가 곧 시작됩니다!", quiz.getName());
+
         notificationService.publishEventReminder(
                 quiz.getQuizId().toString(),
                 "퀴즈 알림",
