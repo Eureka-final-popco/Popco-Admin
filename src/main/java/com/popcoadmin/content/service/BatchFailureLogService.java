@@ -10,8 +10,6 @@ public interface BatchFailureLogService {
 
     List<BatchFailureLog> getUnprocessedFailures();
 
-    List<BatchFailureLog> getFailuresByJobAndStep(String jobName, String stepName);
-
     void markAsProcessed(Long failureLogId);
 
 }

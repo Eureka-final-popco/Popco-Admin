@@ -47,9 +47,6 @@ public class ReviewScheduler {
         }
     }
 
-    /**
-     * 3일 간격으로 오전 1시에 실행
-     */
     @Scheduled(cron = "0 0 1 */3 * *")
     public void scheduleReviewSummaryProcessing() {
         log.info("스케줄된 리뷰 요약 작업 시작");

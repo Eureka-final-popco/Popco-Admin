@@ -7,5 +7,4 @@ import java.util.List;
 
 public interface BatchFailureLogRepository extends JpaRepository<BatchFailureLog, Long> {
     List<BatchFailureLog> findByProcessedFalseOrderByFailureTimeDesc();
-    List<BatchFailureLog> findByJobNameAndStepNameOrderByFailureTimeDesc(String jobName, String stepName);
 }

@@ -65,10 +65,6 @@ public class BatchFailureLogServiceImpl implements BatchFailureLogService {
         return batchFailureLogRepository.findByProcessedFalseOrderByFailureTimeDesc();
     }
 
-    public List<BatchFailureLog> getFailuresByJobAndStep(String jobName, String stepName) {
-        return batchFailureLogRepository.findByJobNameAndStepNameOrderByFailureTimeDesc(jobName, stepName);
-    }
-
     public void markAsProcessed(Long failureLogId) {
         BatchFailureLog failureLog = batchFailureLogRepository.findById(failureLogId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 실패 로그를 찾을 수 없습니다: " + failureLogId));

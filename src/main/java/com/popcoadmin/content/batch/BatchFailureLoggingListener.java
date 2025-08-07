@@ -17,14 +17,20 @@ public class BatchFailureLoggingListener implements StepExecutionListener {
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        if (stepExecution.getExitStatus().getExitCode().equals(ExitStatus.FAILED.getExitCode())) {
+        long writeCount = stepExecution.getWriteCount();
 
-            // 실패한 경우 예외 정보 추출
+        if (writeCount < 5) {
+            Exception writeCountException = new IllegalStateException("추천 콘텐츠가 부족합니다: writeCount= "+ writeCount);
+            BatchFailureLogService.logBatchFailure(stepExecution, writeCountException);
+            stepExecution.setExitStatus(ExitStatus.FAILED);
+        }
+
+        if (stepExecution.getExitStatus().getExitCode().equals(ExitStatus.FAILED.getExitCode())) {
             Exception lastException = getLastException(stepExecution);
+
             if (lastException != null) {
                 BatchFailureLogService.logBatchFailure(stepExecution, lastException);
             } else {
-                // 예외가 없는 경우 일반 실패로 처리
                 Exception genericException = new RuntimeException("Step failed without specific exception");
                 BatchFailureLogService.logBatchFailure(stepExecution, genericException);
             }

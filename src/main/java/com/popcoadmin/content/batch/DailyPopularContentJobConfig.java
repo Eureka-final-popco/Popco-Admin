@@ -165,7 +165,6 @@ public class DailyPopularContentJobConfig {
         );
         reader.setArguments(arguments);
 
-        // Pageable에서 정렬 처리
         Map<String, Sort.Direction> sorts = new HashMap<>();
         sorts.put("likeCount", Sort.Direction.DESC);
         reader.setSort(sorts);

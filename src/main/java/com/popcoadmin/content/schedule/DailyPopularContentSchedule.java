@@ -39,9 +39,7 @@ public class DailyPopularContentSchedule {
         }
     }
 
-    /**
-     * 수동 실행을 위한 메서드 (테스트 용도)
-     */
+    // 수동 실행을 위한 메서드 (테스트 용도)
     public void runManually() {
         try {
             log.info("인기 콘텐츠 집계 배치 작업 수동 실행");
