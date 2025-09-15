@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data  // Lombok 사용 시
+@Data
 @NoArgsConstructor
 public class GeminiRequestDto {
     private List<Content> contents = new ArrayList<>();

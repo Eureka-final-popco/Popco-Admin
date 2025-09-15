@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LLMAnalysisRequest {
-    private List<Review> reviews; // 새로운 리뷰 or 전체 리뷰
+    private List<Review> reviews;
     private Content content;
     private List<ContentGenre> genres;
     private ReviewSummaryDto reviewSummaryDto;

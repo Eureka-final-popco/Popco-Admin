@@ -68,7 +68,6 @@ public class DailyPopularContentJobConfig {
                 .build().build();
     }
 
-    // 이전 데이터 삭제 스텝
     @Bean
     public Step clearPreviousDataStep() {
         return new StepBuilder("clearPreviousDataStep", jobRepository)
@@ -92,7 +91,7 @@ public class DailyPopularContentJobConfig {
 
     @Bean
     public Job retrySingleStepJob() {
-        JobExecutionDecider decider = deciderStep(); // 직접 생성
+        JobExecutionDecider decider = deciderStep();
 
         return new JobBuilder("retrySingleStepJob", jobRepository)
                 .start(decider)

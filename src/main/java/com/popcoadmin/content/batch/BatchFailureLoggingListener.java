@@ -19,12 +19,10 @@ public class BatchFailureLoggingListener implements StepExecutionListener {
     public ExitStatus afterStep(StepExecution stepExecution) {
         if (stepExecution.getExitStatus().getExitCode().equals(ExitStatus.FAILED.getExitCode())) {
 
-            // 실패한 경우 예외 정보 추출
             Exception lastException = getLastException(stepExecution);
             if (lastException != null) {
                 BatchFailureLogService.logBatchFailure(stepExecution, lastException);
             } else {
-                // 예외가 없는 경우 일반 실패로 처리
                 Exception genericException = new RuntimeException("Step failed without specific exception");
                 BatchFailureLogService.logBatchFailure(stepExecution, genericException);
             }

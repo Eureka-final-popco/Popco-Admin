@@ -48,56 +48,97 @@ public class ContentServiceImpl implements ContentService {
     private final ContentVideoRepository videoRepository;
     private final WatchProviderRepository watchProviderRepository;
 
-    @Override
-    @Transactional
-    public void syncAllContentData(int pagesPerCategory, boolean includeDetails) {
-        // 1. 장르 동기화
-        syncGenres();
+//    @Override
+//    @Transactional
+//    public void syncAllContentData(int pagesPerCategory, boolean includeDetails) {
+//        // 1. 장르 동기화
+//        syncGenres();
+//
+//        // 2. Provider 동기화
+//        syncAllProviders();
+//
+//        // 3. 기본 데이터 동기화
+//        discoverKoreanMovies(pagesPerCategory);
+//        discoverKoreanTVSeries(pagesPerCategory);
+//        discoverJapanMovies(pagesPerCategory);
+//        discoverJapanTVSeries(pagesPerCategory);
+//        discoverPopularMovies(pagesPerCategory);
+//        discoverPopularTVSeries(pagesPerCategory);
+////        syncNowPlayingMovies(pagesPerCategory);
+////        syncUpcomingMovies(pagesPerCategory);
+////        syncOnTheAirTvs(pagesPerCategory);
+////        syncPopular(pagesPerCategory);
+////        syncTopRated(pagesPerCategory);
+//
+//        if (includeDetails) {
+//            // 4. 통합 상세 정보 동기화 (한 번의 API 호출로 모든 정보 가져오기)
+//            List<Long> allMovieIds = contentRepository.findAllMovieIds();
+//            List<Long> allTvIds = contentRepository.findAllTvIds();
+//
+//            log.info("Found {} movies and {} tvs. Starting full details sync...",
+//                    allMovieIds.size(), allTvIds.size());
+//
+//            // 배치로 처리
+//            int batchSize = 20;
+//
+//            // 영화 상세 정보 (한 번의 호출로 모든 정보)
+//            for (int i = 0; i < allMovieIds.size(); i += batchSize) {
+//                List<Long> batch = allMovieIds.subList(i, Math.min(i + batchSize, allMovieIds.size()));
+//                log.info("Processing movie batch {}/{}", (i/batchSize) + 1, (allMovieIds.size()/batchSize) + 1);
+//                syncMovieFullDetails(batch);
+//            }
+//
+//            // TV 상세 정보 (한 번의 호출로 모든 정보)
+//            for (int i = 0; i < allTvIds.size(); i += batchSize) {
+//                List<Long> batch = allTvIds.subList(i, Math.min(i + batchSize, allTvIds.size()));
+//                log.info("Processing tv batch {}/{}", (i/batchSize) + 1, (allTvIds.size()/batchSize) + 1);
+//                syncTvFullDetails(batch);
+//            }
+//        }
+//
+//        log.info("All content data synchronization completed!");
+//    }
 
-        // 2. Provider 동기화
-        syncAllProviders();
+@Override
+@Transactional
+public void syncAllContentData(int pagesPerCategory, boolean includeDetails) {
+    syncGenres();
+    syncAllProviders();
 
-        // 3. 기본 데이터 동기화
-        discoverKoreanMovies(pagesPerCategory);
-        discoverKoreanTVSeries(pagesPerCategory);
-        discoverJapanMovies(pagesPerCategory);
-        discoverJapanTVSeries(pagesPerCategory);
-        discoverPopularMovies(pagesPerCategory);
-        discoverPopularTVSeries(pagesPerCategory);
-//        syncNowPlayingMovies(pagesPerCategory);
-//        syncUpcomingMovies(pagesPerCategory);
-//        syncOnTheAirTvs(pagesPerCategory);
-//        syncPopular(pagesPerCategory);
-//        syncTopRated(pagesPerCategory);
+    // 새로 받아온 ID를 저장할 리스트
+    List<Long> newMovieIds = new ArrayList<>();
+    List<Long> newTvIds = new ArrayList<>();
 
-        if (includeDetails) {
-            // 4. 통합 상세 정보 동기화 (한 번의 API 호출로 모든 정보 가져오기)
-            List<Long> allMovieIds = contentRepository.findAllMovieIds();
-            List<Long> allTvIds = contentRepository.findAllTvIds();
+    // 콘텐츠 동기화 및 새로 저장된 ID 수집
+    newTvIds.addAll(discoverKoreanTVSeries(pagesPerCategory));
+//    newTvIds.addAll(discoverKoreanTVSeries(pagesPerCategory));
+//    newMovieIds.addAll(discoverJapanMovies(pagesPerCategory));
+//    newTvIds.addAll(discoverJapanTVSeries(pagesPerCategory));
+//    newMovieIds.addAll(discoverPopularMovies(pagesPerCategory));
+//    newTvIds.addAll(discoverPopularTVSeries(pagesPerCategory));
 
-            log.info("Found {} movies and {} tvs. Starting full details sync...",
-                    allMovieIds.size(), allTvIds.size());
+    if (includeDetails) {
+        log.info("Found {} new movies and {} new tvs. Starting full details sync...",
+                newMovieIds.size(), newTvIds.size());
 
-            // 배치로 처리
-            int batchSize = 20;
+        int batchSize = 20;
 
-            // 영화 상세 정보 (한 번의 호출로 모든 정보)
-            for (int i = 0; i < allMovieIds.size(); i += batchSize) {
-                List<Long> batch = allMovieIds.subList(i, Math.min(i + batchSize, allMovieIds.size()));
-                log.info("Processing movie batch {}/{}", (i/batchSize) + 1, (allMovieIds.size()/batchSize) + 1);
-                syncMovieFullDetails(batch);
-            }
-
-            // TV 상세 정보 (한 번의 호출로 모든 정보)
-            for (int i = 0; i < allTvIds.size(); i += batchSize) {
-                List<Long> batch = allTvIds.subList(i, Math.min(i + batchSize, allTvIds.size()));
-                log.info("Processing tv batch {}/{}", (i/batchSize) + 1, (allTvIds.size()/batchSize) + 1);
-                syncTvFullDetails(batch);
-            }
+        for (int i = 0; i < newMovieIds.size(); i += batchSize) {
+            List<Long> batch = newMovieIds.subList(i, Math.min(i + batchSize, newMovieIds.size()));
+            log.info("Processing movie batch {}/{}", (i / batchSize) + 1, (newMovieIds.size() / batchSize) + 1);
+            syncMovieFullDetails(batch);
         }
 
-        log.info("All content data synchronization completed!");
+        for (int i = 0; i < newTvIds.size(); i += batchSize) {
+            List<Long> batch = newTvIds.subList(i, Math.min(i + batchSize, newTvIds.size()));
+            log.info("Processing tv batch {}/{}", (i / batchSize) + 1, (newTvIds.size() / batchSize) + 1);
+            syncTvFullDetails(batch);
+        }
     }
+
+    log.info("All content data synchronization completed!");
+}
+
 
     @Transactional
     public void syncGenres() {
@@ -175,40 +216,47 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Transactional
-    public void discoverKoreanMovies(int maxPages) {
+    public List<Long> discoverKoreanTVSeries(int maxPages) {
         log.info("Starting korea movies synchronization for {} pages...", maxPages);
-        syncMovies(tmdbMovieApiClient::discoverKoreanMovies, maxPages, "korea movies");
+        return syncTvs(tmdbTvApiClient::discoverKoreanTVSeries, maxPages, "korea movies");
     }
 
-    @Transactional
-    public void discoverKoreanTVSeries(int maxPages) {
-        log.info("Starting korea tv series synchronization for {} pages...", maxPages);
-        syncTvs(tmdbTvApiClient::discoverKoreanTVSeries, maxPages, "korea tv series");
-    }
 
-    @Transactional
-    public void discoverJapanMovies(int maxPages) {
-        log.info("Starting japan movies synchronization for {} pages...", maxPages);
-        syncMovies(tmdbMovieApiClient::discoverJapanMovies, maxPages, "japan movies");
-    }
+//    @Transactional
+//    public void discoverKoreanMovies(int maxPages) {
+//        log.info("Starting korea movies synchronization for {} pages...", maxPages);
+//        syncMovies(tmdbMovieApiClient::discoverKoreanMovies, maxPages, "korea movies");
+//    }
 
-    @Transactional
-    public void discoverJapanTVSeries(int maxPages) {
-        log.info("Starting japan tv series synchronization for {} pages...", maxPages);
-        syncTvs(tmdbTvApiClient::discoverJapanTVSeries, maxPages, "japan tv series");
-    }
-
-    @Transactional
-    public void discoverPopularMovies(int maxPages) {
-        log.info("Starting popular movies synchronization for {} pages...", maxPages);
-        syncMovies(tmdbMovieApiClient::discoverPopularMovies, maxPages, "popular movies");
-    }
-
-    @Transactional
-    public void discoverPopularTVSeries(int maxPages) {
-        log.info("Starting popular tv series synchronization for {} pages...", maxPages);
-        syncTvs(tmdbTvApiClient::discoverPopularTVSeries, maxPages, "popular tv series");
-    }
+//    @Transactional
+//    public void discoverKoreanTVSeries(int maxPages) {
+//        log.info("Starting korea tv series synchronization for {} pages...", maxPages);
+//        syncTvs(tmdbTvApiClient::discoverKoreanTVSeries, maxPages, "korea tv series");
+//    }
+//
+//    @Transactional
+//    public void discoverJapanMovies(int maxPages) {
+//        log.info("Starting japan movies synchronization for {} pages...", maxPages);
+//        syncMovies(tmdbMovieApiClient::discoverJapanMovies, maxPages, "japan movies");
+//    }
+//
+//    @Transactional
+//    public void discoverJapanTVSeries(int maxPages) {
+//        log.info("Starting japan tv series synchronization for {} pages...", maxPages);
+//        syncTvs(tmdbTvApiClient::discoverJapanTVSeries, maxPages, "japan tv series");
+//    }
+//
+//    @Transactional
+//    public void discoverPopularMovies(int maxPages) {
+//        log.info("Starting popular movies synchronization for {} pages...", maxPages);
+//        syncMovies(tmdbMovieApiClient::discoverPopularMovies, maxPages, "popular movies");
+//    }
+//
+//    @Transactional
+//    public void discoverPopularTVSeries(int maxPages) {
+//        log.info("Starting popular tv series synchronization for {} pages...", maxPages);
+//        syncTvs(tmdbTvApiClient::discoverPopularTVSeries, maxPages, "popular tv series");
+//    }
 
     //    @Transactional
 //    public void syncNowPlayingMovies(int maxPages) {
@@ -333,35 +381,72 @@ public class ContentServiceImpl implements ContentService {
         }
     }
 
-    private void syncMovies(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
-        List<Content> allMovies = new ArrayList<>();
+//    private void syncMovies(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
+//        List<Content> allMovies = new ArrayList<>();
+//
+//        Flux.range(1, maxPages)
+//                .concatMap(page -> {
+//                    log.info("Fetching {} movies page {}/{}", type, page, maxPages);
+//                    return apiCall.apply(page)
+//                            .delayElement(Duration.ofMillis(250)); // API rate limiting
+//                })
+//                .doOnNext(response -> {
+//                    log.info("Received {} movies from page {}",
+//                            response.getResults().size(), response.getPage());
+//                })
+//                .flatMapIterable(ContentPageResponse::getResults)
+//                .map(Content::movieFrom)
+//                .buffer(100) // Batch processing
+//                .doOnNext(movies -> {
+//                    contentRepository.saveAll(movies);
+//                    allMovies.addAll(movies);
+//                    log.info("Saved batch of {} movies, total: {}", movies.size(), allMovies.size());
+//                })
+//                .doOnComplete(() -> log.info("Completed {} movies sync. Total movies saved: {}",
+//                        type, allMovies.size()))
+//                .doOnError(error -> log.error("Error during {} movies sync: {}", type, error.getMessage()))
+//                .blockLast();
+//    }
+
+    private List<Long> syncMovies(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
+        List<Long> allMovieIds = new ArrayList<>();
 
         Flux.range(1, maxPages)
                 .concatMap(page -> {
                     log.info("Fetching {} movies page {}/{}", type, page, maxPages);
                     return apiCall.apply(page)
-                            .delayElement(Duration.ofMillis(250)); // API rate limiting
+                            .delayElement(Duration.ofMillis(250))
+                            .onErrorResume(e -> {
+                                log.error("Error fetching page {}: {}", page, e.getMessage());
+                                return Mono.empty();
+                            });
                 })
-                .doOnNext(response -> {
-                    log.info("Received {} movies from page {}",
-                            response.getResults().size(), response.getPage());
+                .flatMapIterable(response -> {
+                    if (response.getResults() == null) return Collections.emptyList();
+                    log.info("Received {} movies from page {}", response.getResults().size(), response.getPage());
+                    return response.getResults();
                 })
-                .flatMapIterable(ContentPageResponse::getResults)
                 .map(Content::movieFrom)
-                .buffer(100) // Batch processing
+                .buffer(100)
                 .doOnNext(movies -> {
-                    contentRepository.saveAll(movies);
-                    allMovies.addAll(movies);
-                    log.info("Saved batch of {} movies, total: {}", movies.size(), allMovies.size());
+                    try {
+                        contentRepository.saveAll(movies);
+                        log.info("Saved batch of {} movies", movies.size());
+                        // 저장 후 ID 추출
+                        movies.forEach(m -> allMovieIds.add(m.getId().getId()));
+                    } catch (Exception e) {
+                        log.error("Failed to save batch: {}", e.getMessage());
+                    }
                 })
-                .doOnComplete(() -> log.info("Completed {} movies sync. Total movies saved: {}",
-                        type, allMovies.size()))
+                .doOnComplete(() -> log.info("Completed {} movies sync. Total movies saved: {}", type, allMovieIds.size()))
                 .doOnError(error -> log.error("Error during {} movies sync: {}", type, error.getMessage()))
                 .blockLast();
+
+        return allMovieIds;
     }
 
-    private void syncTvs(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
-        List<Content> allMovies = new ArrayList<>();
+    private List<Long> syncTvs(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
+        List<Content> allTvs = new ArrayList<>();
 
         Flux.range(1, maxPages)
                 .concatMap(page -> {
@@ -370,22 +455,52 @@ public class ContentServiceImpl implements ContentService {
                             .delayElement(Duration.ofMillis(250)); // API rate limiting
                 })
                 .doOnNext(response -> {
-                    log.info("Received {} tvs from page {}",
-                            response.getResults().size(), response.getPage());
+                    log.info("Received {} tvs from page {}", response.getResults().size(), response.getPage());
                 })
                 .flatMapIterable(ContentPageResponse::getResults)
                 .map(Content::tvFrom)
                 .buffer(100) // Batch processing
                 .doOnNext(tvs -> {
                     contentRepository.saveAll(tvs);
-                    allMovies.addAll(tvs);
-                    log.info("Saved batch of {} tvs, total: {}", tvs.size(), allMovies.size());
+                    allTvs.addAll(tvs);
+                    log.info("Saved batch of {} tvs, total: {}", tvs.size(), allTvs.size());
                 })
-                .doOnComplete(() -> log.info("Completed {} tvs sync. Total tvs saved: {}",
-                        type, allMovies.size()))
+                .doOnComplete(() -> log.info("Completed {} tvs sync. Total tvs saved: {}", type, allTvs.size()))
                 .doOnError(error -> log.error("Error during {} tvs sync: {}", type, error.getMessage()))
                 .blockLast();
+
+        return allTvs.stream()
+                .map(content -> content.getId().getId())  // Content → ContentId → Long
+                .collect(Collectors.toList());
     }
+
+
+//    private List<Long> syncTvs(java.util.function.Function<Integer, Mono<ContentPageResponse>> apiCall, int maxPages, String type) {
+//        List<Content> allMovies = new ArrayList<>();
+//
+//        Flux.range(1, maxPages)
+//                .concatMap(page -> {
+//                    log.info("Fetching {} tvs page {}/{}", type, page, maxPages);
+//                    return apiCall.apply(page)
+//                            .delayElement(Duration.ofMillis(250)); // API rate limiting
+//                })
+//                .doOnNext(response -> {
+//                    log.info("Received {} tvs from page {}",
+//                            response.getResults().size(), response.getPage());
+//                })
+//                .flatMapIterable(ContentPageResponse::getResults)
+//                .map(Content::tvFrom)
+//                .buffer(100) // Batch processing
+//                .doOnNext(tvs -> {
+//                    contentRepository.saveAll(tvs);
+//                    allMovies.addAll(tvs);
+//                    log.info("Saved batch of {} tvs, total: {}", tvs.size(), allMovies.size());
+//                })
+//                .doOnComplete(() -> log.info("Completed {} tvs sync. Total tvs saved: {}",
+//                        type, allMovies.size()))
+//                .doOnError(error -> log.error("Error during {} tvs sync: {}", type, error.getMessage()))
+//                .blockLast();
+//    }
 
     @Transactional
     public void updateContentWithDetails(ContentDetailResponse detail, String type) {

@@ -88,7 +88,7 @@ public class TmdbMovieApiClient {
                         .queryParam("primary_release_date.lte", "2025-08-15")
                         .queryParam("with_original_language", "ko")
                         .queryParam("vote_average.gte", "6")
-                        .queryParam("vote_count.gte", "12")
+                        .queryParam("vote_count.gte", "3")
                         .queryParam("page", page)
                         .build())
                 .retrieve()

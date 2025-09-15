@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ReviewController {
 
-    // git 에 추가 됩니다.
     private final ReviewService reviewService;
     private final ReviewSummaryService reviewSummaryService;
 

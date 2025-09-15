@@ -53,7 +53,6 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
             }
         }
 
-        // 리뷰가 5개 이하인 콘텐츠의 요약 제거
         removeInsufficientReviewSummaries();
 
         log.info("리뷰 요약 작업 완료");
@@ -89,28 +88,22 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
 
                     List<Review> recentReviews = reviewRepository.findByContentAndUpdatedAtBetween(content, start, end);
 
-                    // 2. 리뷰 평점 분포 조회 (JPA에서 GROUP BY로 구현했다고 가정)
                     List<ReviewRatingDistributionDto> ratingHistogram = reviewRepository.findRatingDistributionBeforeDate(
                             content.getId().getId(), content.getId().getType(), start);
 
-                    // 3. LLM 분석에 필요한 데이터 구성
                     ReviewSummaryDto reviewSummary = ReviewSummaryDto.of(existingSummary.get(), ratingHistogram);
                     LLMAnalysisRequest analysisRequest = LLMAnalysisRequest.ofUpdate(recentReviews, content, genres, reviewSummary, SummaryStrategyType.UPDATE_PARTIAL);
 
-                    // 4. LLM 분석 요청
                     LLMAnalysisResult analysisResult = llmService.analyzeReviews(analysisRequest);
 
-                    // 5. 요약 갱신
                     updateExistingSummary(content, existingSummary.get(), analysisResult);
                 }
             } else {
-                // 리뷰 목록 조회
                 List<Review> reviews = reviewRepository.findByContentIdAndType(
                         contentId.getId(), contentId.getType());
 
                 LLMAnalysisRequest analysisRequest = LLMAnalysisRequest.ofInitial(content, genres, reviews, SummaryStrategyType.INITIAL);
 
-                // LLM을 통한 리뷰 분석
                 LLMAnalysisResult analysisResult = llmService.analyzeReviews(analysisRequest);
                 createNewSummary(content, analysisResult);
             }
@@ -146,9 +139,6 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
                 content.getId().getId(), content.getId().getType());
     }
 
-    /**
-     * 리뷰가 5개 이하인 콘텐츠의 요약 제거
-     */
     private void removeInsufficientReviewSummaries() {
         log.info("리뷰 부족 콘텐츠 요약 제거 작업 시작");
 

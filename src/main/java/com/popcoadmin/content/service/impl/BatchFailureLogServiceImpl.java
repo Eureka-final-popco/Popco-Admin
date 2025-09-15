@@ -87,7 +87,6 @@ public class BatchFailureLogServiceImpl implements BatchFailureLogService {
                     .addString("requestDate", LocalDateTime.now().toString()) // 중복 방지
                     .toJobParameters();
 
-            // jobLauncher.run() 호출 시 Job 이름 기반으로 조회
             Job job = jobRegistry.getJob("retrySingleStepJob");
             JobExecution jobExecution = jobLauncher.run(job, params);
 
